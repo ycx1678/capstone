@@ -1,0 +1,40 @@
+@font-face {
+  font-family: "GmarketSans";
+  src: url("../assets/fonts/GmarketSansMedium.woff2") format("woff2");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "GmarketSans";
+  src: url("../assets/fonts/GmarketSansBold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "KoPubWorldDotum";
+  src: url("../assets/fonts/KoPubWorld Dotum_Pro Bold.woff2") format("woff2");
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+html,
+body,
+#root {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  font-family: "GmarketSans", "Apple SD Gothic Neo", "Malgun Gothic", sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  overflow-x: hidden;
+}

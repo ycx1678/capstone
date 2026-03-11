@@ -1,6 +1,6 @@
 // src/data/siteData.js
 
-export const STORAGE_KEY = "capstone_site_data_v3";
+export const STORAGE_KEY = "capstone_site_data_v4";
 
 export const defaultData = {
   brand: {

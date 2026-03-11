@@ -1,111 +1,132 @@
-import { clamp } from "./adminPath";
+// src/pages/admin_console/adminImage.js
 
-async function fileToWebpBlob(
-  file,
-  { maxDim = 1600, quality = 0.8 } = {}
-) {
-  if (!file) throw new Error("No file");
+const CLOUD_NAME = "dhubbsdry";
+const UPLOAD_PRESET = "capstone_unsigned";
+const UPLOAD_URL = `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`;
 
-  const bitmap = await createImageBitmap(file).catch(() => null);
-
-  let width, height, source;
-
-  if (bitmap) {
-    width = bitmap.width;
-    height = bitmap.height;
-    source = bitmap;
-  } else {
-    const url = URL.createObjectURL(file);
-    try {
-      const img = await new Promise((resolve, reject) => {
-        const el = new Image();
-        el.onload = () => resolve(el);
-        el.onerror = reject;
-        el.src = url;
-      });
-      width = img.naturalWidth || img.width;
-      height = img.naturalHeight || img.height;
-      source = img;
-    } finally {
-      URL.revokeObjectURL(url);
-    }
-  }
-
-  if (!width || !height) throw new Error("Invalid image");
-
-  const scale = Math.min(1, maxDim / Math.max(width, height));
-  const outW = Math.max(1, Math.round(width * scale));
-  const outH = Math.max(1, Math.round(height * scale));
-
-  const canvas = document.createElement("canvas");
-  canvas.width = outW;
-  canvas.height = outH;
-
-  const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
-  if (!ctx) throw new Error("Canvas context unavailable");
-
-  ctx.imageSmoothingEnabled = true;
-  ctx.imageSmoothingQuality = "high";
-  ctx.clearRect(0, 0, outW, outH);
-  ctx.drawImage(source, 0, 0, outW, outH);
-
-  const q = clamp(Number(quality) || 0.8, 0.05, 1);
-
-  const blob = await new Promise((resolve) => {
-    canvas.toBlob((b) => resolve(b), "image/webp", q);
-  });
-
-  if (!blob) throw new Error("WebP encode failed");
-
-  if (bitmap && bitmap.close) bitmap.close();
-
-  return blob;
+function clamp(n, min, max) {
+  return Math.max(min, Math.min(max, n));
 }
 
-export async function uploadImage(
-  file,
-  { maxDim = 1600, quality = 0.8, folder = "capstone" } = {}
-) {
-  const cloudName = process.env.REACT_APP_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = process.env.REACT_APP_CLOUDINARY_UPLOAD_PRESET;
-
-  if (!cloudName) throw new Error("Missing REACT_APP_CLOUDINARY_CLOUD_NAME");
-  if (!uploadPreset) throw new Error("Missing REACT_APP_CLOUDINARY_UPLOAD_PRESET");
-  if (!file) throw new Error("No file");
-
-  const webpBlob = await fileToWebpBlob(file, { maxDim, quality });
-
-  const safeBaseName =
-    (file.name || "image")
-      .replace(/\.[^/.]+$/, "")
-      .replace(/[^a-zA-Z0-9-_]/g, "_") || "image";
-
-  const uploadFile = new File([webpBlob], `${safeBaseName}.webp`, {
-    type: "image/webp",
+function readFileAsDataURL(file) {
+  return new Promise((resolve, reject) => {
+    const fr = new FileReader();
+    fr.onload = () => resolve(fr.result);
+    fr.onerror = reject;
+    fr.readAsDataURL(file);
   });
+}
 
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = reject;
+    img.src = src;
+  });
+}
+
+async function compressImage(file, opts = {}) {
+  const maxDim = clamp(Number(opts?.maxDim || 1600), 400, 4000);
+  const quality = clamp(Number(opts?.quality || 0.82), 0.3, 0.95);
+
+  const type = String(file?.type || "").toLowerCase();
+
+  // GIF/SVG는 원본 업로드
+  if (type.includes("gif") || type.includes("svg")) {
+    return file;
+  }
+
+  const dataUrl = await readFileAsDataURL(file);
+  const img = await loadImage(dataUrl);
+
+  const srcW = img.naturalWidth || img.width;
+  const srcH = img.naturalHeight || img.height;
+
+  if (!srcW || !srcH) return file;
+
+  const scale = Math.min(1, maxDim / Math.max(srcW, srcH));
+  const targetW = Math.max(1, Math.round(srcW * scale));
+  const targetH = Math.max(1, Math.round(srcH * scale));
+
+  const canvas = document.createElement("canvas");
+  canvas.width = targetW;
+  canvas.height = targetH;
+
+  const ctx = canvas.getContext("2d", { alpha: true });
+  if (!ctx) return file;
+
+  ctx.drawImage(img, 0, 0, targetW, targetH);
+
+  const outType =
+    type.includes("png") || type.includes("webp")
+      ? "image/webp"
+      : "image/jpeg";
+
+  const blob = await new Promise((resolve) =>
+    canvas.toBlob(resolve, outType, quality)
+  );
+
+  if (!blob) return file;
+
+  const ext =
+    outType === "image/webp"
+      ? "webp"
+      : outType === "image/jpeg"
+      ? "jpg"
+      : "png";
+
+  const baseName = String(file.name || "upload").replace(/\.[^.]+$/, "");
+  return new File([blob], `${baseName}.${ext}`, {
+    type: outType,
+    lastModified: Date.now(),
+  });
+}
+
+function guessFolder(file) {
+  const name = String(file?.name || "").toLowerCase();
+
+  if (name.includes("logo")) return "capstone/common";
+  if (name.includes("field") || name.includes("portfolio")) {
+    return "capstone/fields";
+  }
+  if (name.includes("case")) return "capstone/cases";
+  if (name.includes("org")) return "capstone/org";
+
+  return "capstone/uploads";
+}
+
+async function uploadToCloudinary(file, folder = "capstone/uploads") {
   const formData = new FormData();
-  formData.append("file", uploadFile);
-  formData.append("upload_preset", uploadPreset);
+  formData.append("file", file);
+  formData.append("upload_preset", UPLOAD_PRESET);
   formData.append("folder", folder);
 
-  const res = await fetch(
-    `https://api.cloudinary.com/v1_1/${cloudName}/image/upload`,
-    {
-      method: "POST",
-      body: formData,
-    }
-  );
+  const res = await fetch(UPLOAD_URL, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Cloudinary upload failed: ${text}`);
+  }
 
   const data = await res.json();
 
-  if (!res.ok) {
-    throw new Error(data?.error?.message || "Cloudinary upload failed");
-  }
-
   if (!data?.secure_url) {
-    throw new Error("No secure_url returned from Cloudinary");
+    throw new Error("Cloudinary secure_url not returned");
   }
 
   return data.secure_url;
+}
+
+export async function uploadImage(file, opts = {}) {
+  if (!file) throw new Error("No file");
+
+  const compressed = await compressImage(file, opts);
+  const folder = guessFolder(file);
+  const url = await uploadToCloudinary(compressed, folder);
+
+  return url;
 }

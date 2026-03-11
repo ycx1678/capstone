@@ -12,6 +12,11 @@ import ValuesWorkSection from "./components/sections/ValuesWorkSection";
 import FieldsSection from "./components/sections/FieldsSection";
 import CasesSection from "./components/sections/CasesSection";
 import ContactSection from "./components/sections/ContactSection";
+
+// 네 프로젝트에서 실제 사용하는 관리자 페이지 import 경로로 유지
+// 기존 경로가 맞으면 그대로 두고,
+// 만약 AdminConsolePage를 직접 쓰면 아래 줄만 바꿔라.
+// import AdminPage from "./pages/admin_console/AdminConsolePage";
 import AdminPage from "./pages/AdminPageTemp";
 
 function normalizeHash(raw) {
@@ -21,10 +26,11 @@ function normalizeHash(raw) {
 }
 
 export default function App() {
-  const { data, setData, saveError } = useSiteStore();
+  const { data, setData, saveError, loading, save, saving } = useSiteStore();
   const isMobile = useMediaQuery("(max-width: 768px)");
 
   const [hash, setHash] = useState(() => normalizeHash(window.location.hash));
+
   useEffect(() => {
     const onHash = () => setHash(normalizeHash(window.location.hash));
     window.addEventListener("hashchange", onHash);
@@ -33,14 +39,12 @@ export default function App() {
 
   const isAdmin = hash.startsWith("#/admin");
 
-  // ✅ 훅 순서 고정: admin이어도 useMemo는 항상 호출
   const styles = useMemo(() => {
-    if (isAdmin) return null; // admin일 때는 메인 styles 계산 스킵
+    if (isAdmin) return null;
     return getSiteStyles({ data, isMobile });
   }, [isAdmin, data, isMobile]);
 
   const headerHeight = data?.layout?.headerHeight ?? 74;
-
   const INTRO_BG = "#2b2628";
 
   const themesBySection = {
@@ -52,16 +56,40 @@ export default function App() {
     contact: "dark",
   };
 
-  // ✅ Admin 페이지
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#0b0d12",
+          color: "#ffffff",
+          fontFamily: "system-ui, sans-serif",
+          letterSpacing: "-0.02em",
+        }}
+      >
+        Loading...
+      </div>
+    );
+  }
+
   if (isAdmin) {
     return (
       <>
         <style>{`
           * { box-sizing: border-box; }
-          html, body { margin:0; padding:0; background:#0b0d12; }
+          html, body { margin: 0; padding: 0; background: #0b0d12; }
           body { overflow-x: hidden; }
         `}</style>
-        <AdminPage data={data} setData={setData} saveError={saveError} />
+
+        <AdminPage
+          data={data}
+          setData={setData}
+          saveError={saveError}
+          save={save}
+          saving={saving}
+        />
       </>
     );
   }
@@ -70,14 +98,12 @@ export default function App() {
     <div style={{ minHeight: "100vh" }}>
       <style>{`
         * { box-sizing: border-box; }
-        html, body { margin:0; padding:0; background: transparent; }
+        html, body { margin: 0; padding: 0; background: transparent; }
         body { overflow-x: hidden; }
       `}</style>
 
-      {/* ✅ Header는 폰트 제외(기존 유지) */}
       <Header data={data} styles={styles} />
 
-      {/* ✅ Header 제외한 전체에만 GmarketSans 강제 적용 */}
       <div style={{ fontFamily: '"GmarketSans", system-ui, sans-serif' }}>
         <IntroSection
           data={data}

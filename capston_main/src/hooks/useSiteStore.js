@@ -1,6 +1,7 @@
 // src/hooks/useSiteStore.js
-import { useEffect, useMemo, useState } from "react";
-import { loadData, saveData } from "../data/siteData";
+import { useCallback, useMemo, useState, useEffect } from "react";
+import { defaultData } from "../data/siteData";
+import { fetchRemoteContent, saveRemoteContent } from "../lib/contentApi";
 
 const DEFAULT_DATA = {
   layout: {},
@@ -11,28 +12,52 @@ function normalizeData(raw) {
   const d = raw && typeof raw === "object" ? raw : {};
   return {
     ...DEFAULT_DATA,
+    ...defaultData,
     ...d,
-    layout: { ...DEFAULT_DATA.layout, ...(d.layout || {}) },
-    media: { ...DEFAULT_DATA.media, ...(d.media || {}) },
+    layout: {
+      ...DEFAULT_DATA.layout,
+      ...(defaultData.layout || {}),
+      ...(d.layout || {}),
+    },
+    media: {
+      ...DEFAULT_DATA.media,
+      ...(defaultData.media || {}),
+      ...(d.media || {}),
+    },
   };
 }
 
-function getSaveErrorMessage(e) {
-  const msg = String(e?.message || e || "");
-  if (
-    e?.name === "QuotaExceededError" ||
-    /quota/i.test(msg) ||
-    /exceed/i.test(msg) ||
-    /storage/i.test(msg)
-  ) {
-    return "localStorage 용량이 부족해서 저장에 실패했습니다. maxDim/quality를 낮추거나 데이터를 정리하세요.";
-  }
-  return "저장에 실패했습니다. 콘솔 로그를 확인하세요.";
-}
-
 function useSiteStoreImpl() {
-  const [data, _setData] = useState(() => normalizeData(loadData()));
+  const [data, _setData] = useState(() => normalizeData(defaultData));
   const [saveError, setSaveError] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    async function init() {
+      try {
+        const remote = await fetchRemoteContent();
+        if (!alive) return;
+        _setData(normalizeData(remote || defaultData));
+        setSaveError(null);
+      } catch (e) {
+        console.error("fetchRemoteContent failed:", e);
+        if (!alive) return;
+        _setData(normalizeData(defaultData));
+        setSaveError("원격 데이터를 불러오지 못해 기본 데이터로 표시 중입니다.");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    }
+
+    init();
+
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const setData = useMemo(
     () => (updater) => {
@@ -44,25 +69,35 @@ function useSiteStoreImpl() {
     []
   );
 
-  useEffect(() => {
+  const save = useCallback(async () => {
+    setSaving(true);
     try {
-      saveData(data);
+      await saveRemoteContent(data);
       setSaveError(null);
+      return { ok: true };
     } catch (e) {
-      console.error("saveData failed:", e);
-      setSaveError(getSaveErrorMessage(e));
+      console.error("saveRemoteContent failed:", e);
+      setSaveError("원격 저장에 실패했습니다.");
+      return { ok: false, error: e };
+    } finally {
+      setSaving(false);
     }
   }, [data]);
 
-  return { data, setData, saveError };
+  return {
+    data,
+    setData,
+    save,
+    saveError,
+    loading,
+    saving,
+  };
 }
 
-// ✅ named export (기존 코드와 호환)
 export function useSiteStore() {
   return useSiteStoreImpl();
 }
 
-// ✅ default export (import 꼬임 방지용)
 export default function useSiteStoreDefault() {
   return useSiteStoreImpl();
 }

@@ -42,14 +42,14 @@ export default function LogoParticleMorphCanvas({
   gatherSec = 1.8,
   holdSec = 1.25,
 
-  logoFitW = 0.62,
-  logoFitH = 0.26,
+  logoFitW = 0.52,
+  logoFitH = 0.22,
   logoOffsetY = 0,
-  logoScale = 1.5,
+  logoScale = 1.18,
 
   overlayStrength = 1.0,
   dprCap = 5,
-  overlayOversample = 3.2,
+  overlayOversample = 4.5,
 
   centerOffsetY = 0,
 

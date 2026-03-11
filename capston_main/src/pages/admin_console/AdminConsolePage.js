@@ -37,7 +37,13 @@ import {
 import { uploadImage } from "./adminImage";
 import { CASE_SLOTS, ensureCaseSlots, setBlockImages } from "./adminCases";
 
-export default function AdminConsolePage({ data, setData, saveError }) {
+export default function AdminConsolePage({
+  data,
+  setData,
+  saveError,
+  save,
+  saving,
+}) {
   const isMobile = useIsMobile(860);
   const [forceOpen, setForceOpen] = useState(false);
 
@@ -198,6 +204,22 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     },
     [setData, showToast]
   );
+
+  const handleRemoteSave = useCallback(async () => {
+    if (!save) {
+      showToast("저장 함수가 연결되지 않았습니다.", "err");
+      return;
+    }
+
+    try {
+      const result = await save();
+      if (result?.ok) showToast("Supabase 저장 완료", "ok");
+      else showToast("Supabase 저장 실패", "err");
+    } catch (e) {
+      console.error(e);
+      showToast("Supabase 저장 실패", "err");
+    }
+  }, [save, showToast]);
 
   const approxJsonSize = useMemo(() => {
     try {
@@ -460,6 +482,15 @@ export default function AdminConsolePage({ data, setData, saveError }) {
                   </div>
 
                   <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+                    <button
+                      type="button"
+                      onClick={handleRemoteSave}
+                      style={{ ...ui.btn, ...ui.btnPrimary }}
+                      disabled={busy || saving}
+                    >
+                      {saving ? "저장 중..." : "저장"}
+                    </button>
+
                     <button
                       type="button"
                       onClick={logout}
@@ -795,9 +826,7 @@ export default function AdminConsolePage({ data, setData, saveError }) {
                           <div
                             style={{
                               display: "grid",
-                              gridTemplateColumns: isMobile
-                                ? "1fr"
-                                : "1fr 1fr",
+                              gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
                               gap: 12,
                               marginTop: 12,
                             }}

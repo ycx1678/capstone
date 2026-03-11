@@ -1,6 +1,12 @@
 import React, { useState } from "react";
 import SectionLabel from "../SectionLabel";
 
+function encode(data) {
+  return Object.keys(data)
+    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`)
+    .join("&");
+}
+
 export default function ContactSection({
   data,
   isMobile,
@@ -19,12 +25,18 @@ export default function ContactSection({
     inquiry: "",
   });
 
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitState, setSubmitState] = useState({
+    ok: false,
+    error: false,
+    message: "",
+  });
+
   const address =
     c.address || "서울시 서대문구 신촌로25 (창천동,상록빌딩)";
 
   const fg = t.fg;
   const subFg = t.sub;
-  const border = t.border;
   const gold = styles?.brand?.base || "#C7A66A";
   const goldBorder = styles?.brand?.border || "rgba(199,166,106,0.34)";
   const goldSoft = styles?.brand?.soft || "rgba(199,166,106,0.10)";
@@ -62,7 +74,8 @@ export default function ContactSection({
     margin: "0 auto",
     background:
       theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.92)",
-    border: `1px solid ${border}`,
+    border: `1px solid ${goldBorder}`,
+    boxShadow: theme === "dark" ? `0 24px 60px rgba(0,0,0,0.24)` : undefined,
   };
 
   const cardPad = isMobile ? 20 : 32;
@@ -91,18 +104,16 @@ export default function ContactSection({
   const addressValueStyle = {
     ...valueStyle,
     fontSize: isMobile ? "15.5px" : "17px",
-    color: gold,
     lineHeight: 1.8,
   };
 
   const divider = {
     height: 1,
-    background:
-      theme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(11,18,32,0.08)",
+    background: goldBorder,
   };
 
   const infoBlock = {
-    padding: isMobile ? "14px 0" : "16px 0",
+    padding: isMobile ? "12px 0" : "14px 0",
   };
 
   const inputStyle = styles?.ui?.input
@@ -113,8 +124,23 @@ export default function ContactSection({
             theme === "dark" ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.02)",
         }),
         minHeight: isMobile ? 50 : 54,
+        border: `1px solid ${goldBorder}`,
+        boxShadow: "none",
       }
-    : {};
+    : {
+        width: "100%",
+        minHeight: isMobile ? 50 : 54,
+        padding: "0 16px",
+        borderRadius: 14,
+        border: `1px solid ${goldBorder}`,
+        background:
+          theme === "dark" ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.02)",
+        color: fg,
+        outline: "none",
+        fontFamily: bodyFont,
+        fontSize: isMobile ? 14 : 15,
+        boxSizing: "border-box",
+      };
 
   const textareaStyle = styles?.ui?.textarea
     ? {
@@ -125,8 +151,24 @@ export default function ContactSection({
           background:
             theme === "dark" ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.02)",
         }),
+        border: `1px solid ${goldBorder}`,
+        boxShadow: "none",
       }
-    : {};
+    : {
+        width: "100%",
+        minHeight: isMobile ? 110 : 126,
+        padding: "14px 16px",
+        borderRadius: 14,
+        border: `1px solid ${goldBorder}`,
+        background:
+          theme === "dark" ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.02)",
+        color: fg,
+        outline: "none",
+        fontFamily: bodyFont,
+        fontSize: isMobile ? 14 : 15,
+        resize: "vertical",
+        boxSizing: "border-box",
+      };
 
   const submitBtn = styles?.ui?.btn
     ? {
@@ -139,17 +181,90 @@ export default function ContactSection({
         justifyContent: "center",
         fontFamily: bodyFont,
         fontWeight: 700,
+        opacity: isSubmitting ? 0.7 : 1,
+        cursor: isSubmitting ? "not-allowed" : "pointer",
       }
-    : {};
+    : {
+        width: isMobile ? "100%" : 180,
+        minHeight: 52,
+        border: "none",
+        borderRadius: 14,
+        background: gold,
+        color: "#fff",
+        fontFamily: bodyFont,
+        fontWeight: 700,
+        cursor: isSubmitting ? "not-allowed" : "pointer",
+        opacity: isSubmitting ? 0.7 : 1,
+      };
+
+  const statusStyle = {
+    marginTop: 12,
+    padding: "12px 14px",
+    borderRadius: 12,
+    fontSize: isMobile ? 13 : 14,
+    lineHeight: 1.6,
+    fontFamily: bodyFont,
+    border: `1px solid ${
+      submitState.error ? "rgba(220,38,38,0.28)" : goldBorder
+    }`,
+    background: submitState.error
+      ? "rgba(220,38,38,0.08)"
+      : theme === "dark"
+      ? "rgba(255,255,255,0.04)"
+      : "rgba(0,0,0,0.03)",
+    color: submitState.error ? "#ffb4b4" : subFg,
+  };
 
   const handleChange = (key) => (e) => {
     const value = e.target.value;
     setForm((prev) => ({ ...prev, [key]: value }));
+    if (submitState.ok || submitState.error) {
+      setSubmitState({ ok: false, error: false, message: "" });
+    }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    alert("문의 폼 UI가 연결되었습니다. 실제 전송 연동은 추후 연결 가능합니다.");
+
+    if (isSubmitting) return;
+
+    setIsSubmitting(true);
+    setSubmitState({ ok: false, error: false, message: "" });
+
+    try {
+      await fetch("/", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: encode({
+          "form-name": "capstone-contact",
+          ...form,
+        }),
+      });
+
+      setSubmitState({
+        ok: true,
+        error: false,
+        message:
+          "문의가 정상적으로 접수되었습니다. 확인 후 연락드리겠습니다.",
+      });
+
+      setForm({
+        name: "",
+        org: "",
+        phone: "",
+        email: "",
+        inquiry: "",
+      });
+    } catch (error) {
+      setSubmitState({
+        ok: false,
+        error: true,
+        message:
+          "문의 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -227,12 +342,8 @@ export default function ContactSection({
             <div
               style={{
                 padding: cardPad,
-                borderRight: isMobile
-                  ? "none"
-                  : `${styles.tok.border.w}px solid ${border}`,
-                borderBottom: isMobile
-                  ? `${styles.tok.border.w}px solid ${border}`
-                  : "none",
+                borderRight: isMobile ? "none" : `1px solid ${goldBorder}`,
+                borderBottom: isMobile ? `1px solid ${goldBorder}` : "none",
                 background:
                   theme === "dark"
                     ? "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025))"
@@ -242,41 +353,12 @@ export default function ContactSection({
             >
               <div
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: isMobile ? "7px 12px" : "8px 14px",
-                  borderRadius: 999,
-                  border: `1px solid ${goldBorder}`,
-                  background: goldSoft,
-                  color: gold,
-                  fontSize: isMobile ? "11px" : "12px",
-                  fontWeight: 700,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  fontFamily: styles?.fonts?.nav,
-                  boxShadow: `0 10px 24px ${goldSoftStrong}`,
-                  marginBottom: 16,
-                }}
-              >
-                <span
-                  style={{
-                    width: 22,
-                    height: 1,
-                    background: `linear-gradient(90deg, rgba(199,166,106,0.18), ${gold})`,
-                  }}
-                />
-                <span>Company Information</span>
-              </div>
-
-              <div
-                style={{
                   fontSize: isMobile ? "22px" : "24px",
                   fontWeight: 700,
                   color: fg,
                   fontFamily: displayFont,
                   letterSpacing: "-0.02em",
-                  marginBottom: 22,
+                  marginBottom: 14,
                 }}
               >
                 {c.companyName || "주식회사 캡스톤그룹"}
@@ -330,35 +412,6 @@ export default function ContactSection({
             >
               <div
                 style={{
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: 10,
-                  padding: isMobile ? "7px 12px" : "8px 14px",
-                  borderRadius: 999,
-                  border: `1px solid ${goldBorder}`,
-                  background: goldSoft,
-                  color: gold,
-                  fontSize: isMobile ? "11px" : "12px",
-                  fontWeight: 700,
-                  letterSpacing: "0.12em",
-                  textTransform: "uppercase",
-                  fontFamily: styles?.fonts?.nav,
-                  boxShadow: `0 10px 24px ${goldSoftStrong}`,
-                  marginBottom: 16,
-                }}
-              >
-                <span
-                  style={{
-                    width: 22,
-                    height: 1,
-                    background: `linear-gradient(90deg, rgba(199,166,106,0.18), ${gold})`,
-                  }}
-                />
-                <span>Message</span>
-              </div>
-
-              <div
-                style={{
                   fontSize: isMobile ? "22px" : "24px",
                   fontWeight: 700,
                   color: fg,
@@ -371,12 +424,36 @@ export default function ContactSection({
               </div>
 
               <form
+                name="capstone-contact"
+                method="POST"
+                data-netlify="true"
+                netlify-honeypot="bot-field"
                 onSubmit={handleSubmit}
                 style={{
                   display: "grid",
                   gap: 14,
                 }}
               >
+                <input type="hidden" name="form-name" value="capstone-contact" />
+                <input type="hidden" name="bot-field" />
+
+                <div
+                  style={{
+                    position: "absolute",
+                    left: "-9999px",
+                    opacity: 0,
+                    pointerEvents: "none",
+                    height: 0,
+                    overflow: "hidden",
+                  }}
+                  aria-hidden="true"
+                >
+                  <label>
+                    Don’t fill this out if you're human:
+                    <input name="bot-field" />
+                  </label>
+                </div>
+
                 <div
                   style={{
                     display: "grid",
@@ -390,10 +467,12 @@ export default function ContactSection({
                     </div>
                     <input
                       type="text"
+                      name="name"
                       value={form.name}
                       onChange={handleChange("name")}
                       placeholder={formText?.fields?.name || "성명"}
                       style={inputStyle}
+                      required
                     />
                   </div>
 
@@ -403,6 +482,7 @@ export default function ContactSection({
                     </div>
                     <input
                       type="text"
+                      name="org"
                       value={form.org}
                       onChange={handleChange("org")}
                       placeholder={formText?.fields?.org || "소속"}
@@ -424,6 +504,7 @@ export default function ContactSection({
                     </div>
                     <input
                       type="text"
+                      name="phone"
                       value={form.phone}
                       onChange={handleChange("phone")}
                       placeholder={formText?.fields?.phone || "핸드폰번호"}
@@ -437,10 +518,12 @@ export default function ContactSection({
                     </div>
                     <input
                       type="email"
+                      name="email"
                       value={form.email}
                       onChange={handleChange("email")}
                       placeholder={formText?.fields?.email || "이메일주소"}
                       style={inputStyle}
+                      required
                     />
                   </div>
                 </div>
@@ -450,10 +533,12 @@ export default function ContactSection({
                     {formText?.fields?.inquiry || "문의사항"}
                   </div>
                   <textarea
+                    name="inquiry"
                     value={form.inquiry}
                     onChange={handleChange("inquiry")}
                     placeholder={formText?.fields?.inquiry || "문의사항"}
                     style={textareaStyle}
+                    required
                   />
                 </div>
 
@@ -464,10 +549,16 @@ export default function ContactSection({
                     marginTop: 4,
                   }}
                 >
-                  <button type="submit" style={submitBtn}>
-                    {formText?.fields?.submit || "전송"}
+                  <button type="submit" style={submitBtn} disabled={isSubmitting}>
+                    {isSubmitting
+                      ? "전송 중..."
+                      : formText?.fields?.submit || "전송"}
                   </button>
                 </div>
+
+                {(submitState.ok || submitState.error) && (
+                  <div style={statusStyle}>{submitState.message}</div>
+                )}
               </form>
             </div>
           </div>
@@ -475,7 +566,7 @@ export default function ContactSection({
           <div
             style={{
               padding: isMobile ? "14px 16px" : "14px 24px",
-              borderTop: `${styles.tok.border.w}px solid ${border}`,
+              borderTop: `1px solid ${goldBorder}`,
               background:
                 theme === "dark"
                   ? "rgba(255,255,255,0.035)"

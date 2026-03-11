@@ -35,6 +35,26 @@ export default function IntroSection({
 
   const logoSrc = "/capstone_logo_remove.png";
   const logoScale = isMobile ? 1.22 : 1.38;
+  const gold = "#C7A66A";
+
+  const introItems = [
+    {
+      title: "PCO",
+      desc: "국제회의, 컨퍼런스, 포럼, 심포지엄, 학술대회, 세미나 등 학술관련 프로그램 기획 및 운영",
+    },
+    {
+      title: "Event & Exhibition",
+      desc: "기념식, 시상식, 비전선포식, 프로모션 등 부대행사 기획 및 운영",
+    },
+    {
+      title: "Design & Journal",
+      desc: "온/오프라인 디자인 기획 및 운영, 편집 및 인쇄",
+    },
+    {
+      title: "On-Line",
+      desc: "온라인 회의 기획 및 운영, 홈페이지 제작, 중계시스템 운영",
+    },
+  ];
 
   const clearAllTimers = () => {
     timers.current.forEach(clearTimeout);
@@ -51,7 +71,7 @@ export default function IntroSection({
     }
   };
 
-  // ✅ 로고 -> 사라짐 -> 배경 -> 텍스트
+  // 로고 -> 사라짐 -> 배경 -> 텍스트
   const onLogoDone = () => {
     if (firedRef.current) return;
     firedRef.current = true;
@@ -88,7 +108,6 @@ export default function IntroSection({
     img.src = logoSrc;
   }, []);
 
-  // ✅ 배경은 항상 2레이어 유지하고 opacity만 교차
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
 
@@ -230,9 +249,9 @@ export default function IntroSection({
         }
 
         .introTextWrap {
-          width: ${isMobile ? "100%" : "min(760px, 54vw)"};
+          width: ${isMobile ? "100%" : "min(900px, 66vw)"};
           display: grid;
-          gap: ${isMobile ? "14px" : "20px"};
+          gap: ${isMobile ? "8px" : "10px"};
           opacity: 0;
           transform: translateY(24px);
           transition: opacity 900ms ease, transform 900ms ease;
@@ -246,11 +265,11 @@ export default function IntroSection({
         .introTitle {
           margin: 0;
           font-size: ${
-            isMobile ? "clamp(32px, 9vw, 42px)" : "clamp(50px, 5vw, 74px)"
+            isMobile ? "clamp(32px, 9vw, 42px)" : "clamp(54px, 5.3vw, 78px)"
           };
           font-weight: 700;
           letter-spacing: -0.04em;
-          line-height: 1.05;
+          line-height: 1.03;
           color: #fff;
           word-break: keep-all;
           text-shadow: 0 10px 30px rgba(0,0,0,0.22);
@@ -258,10 +277,10 @@ export default function IntroSection({
 
         .introSub {
           margin: 0;
-          font-size: ${isMobile ? "15px" : "18px"};
-          font-weight: 500;
-          line-height: 1.82;
-          color: rgba(255,255,255,0.88);
+          font-size: ${isMobile ? "15px" : "19px"};
+          font-weight: 600;
+          line-height: 1.32;
+          color: rgba(255,255,255,0.9);
           max-width: 58ch;
           white-space: pre-line;
           word-break: keep-all;
@@ -269,7 +288,7 @@ export default function IntroSection({
         }
 
         .introBulletList {
-          margin: 4px 0 0;
+          margin: ${isMobile ? "6px" : "8px"} 0 0;
           padding: 0;
           list-style: none;
           display: grid;
@@ -277,6 +296,7 @@ export default function IntroSection({
           opacity: 0;
           transform: translateY(16px);
           transition: opacity 700ms ease, transform 700ms ease;
+          max-width: ${isMobile ? "100%" : "980px"};
         }
 
         .introBulletList.show {
@@ -285,24 +305,47 @@ export default function IntroSection({
         }
 
         .introBulletItem {
-          display: flex;
-          gap: 12px;
-          font-size: ${isMobile ? "14px" : "16px"};
-          font-weight: 500;
+          display: grid;
+          grid-template-columns: ${isMobile ? "18px 1fr" : "22px 1fr"};
+          column-gap: 10px;
+          align-items: start;
           color: #fff;
-          line-height: 1.72;
           word-break: keep-all;
           text-shadow: 0 8px 24px rgba(0,0,0,0.16);
         }
 
         .introBulletDot {
-          width: 8px;
-          height: 8px;
+          width: ${isMobile ? "9px" : "10px"};
+          height: ${isMobile ? "9px" : "10px"};
           border-radius: 50%;
-          background: #C7A66A;
-          margin-top: 8px;
+          background: ${gold};
+          margin-top: ${isMobile ? "9px" : "11px"};
           box-shadow: 0 0 0 4px rgba(199,166,106,0.15);
           flex: 0 0 auto;
+        }
+
+        .introBulletContent {
+          display: grid;
+          gap: 2px;
+        }
+
+        .introBulletHeading {
+          display: inline-block;
+          color: ${gold};
+          font-size: ${
+            isMobile ? "clamp(19px, 5.4vw, 26px)" : "clamp(24px, 2vw, 34px)"
+          };
+          font-weight: 800;
+          line-height: 1.08;
+          letter-spacing: -0.03em;
+        }
+
+        .introBulletDesc {
+          color: rgba(255,255,255,0.96);
+          font-size: ${isMobile ? "14px" : "16px"};
+          font-weight: 500;
+          line-height: 1.36;
+          margin-top: 0;
         }
 
         @media (max-width: 768px) {
@@ -320,15 +363,11 @@ export default function IntroSection({
         <>
           <div
             className="introBgLayer introBgPrev"
-            style={{
-              backgroundImage: `url(${previousBg})`,
-            }}
+            style={{ backgroundImage: `url(${previousBg})` }}
           />
           <div
             className="introBgLayer introBgCurrent"
-            style={{
-              backgroundImage: `url(${currentBg})`,
-            }}
+            style={{ backgroundImage: `url(${currentBg})` }}
           />
         </>
       )}
@@ -361,18 +400,21 @@ export default function IntroSection({
           <div className={`introTextWrap ${showText ? "show" : ""}`}>
             <h1 className="introTitle">{main.title || "MICE 산업 전문기업"}</h1>
 
-            {main.subtitle && <p className="introSub">{main.subtitle}</p>}
+            <p className="introSub">
+              {main.subtitle || "각 분야의 전문가들이 최고의 행사를 기획 및 운영합니다."}
+            </p>
 
-            {(main.bullets || []).length > 0 && (
-              <ul className={`introBulletList ${showBullets ? "show" : ""}`}>
-                {main.bullets.map((b, i) => (
-                  <li key={i} className="introBulletItem">
-                    <span className="introBulletDot" />
-                    <span>{b}</span>
-                  </li>
-                ))}
-              </ul>
-            )}
+            <ul className={`introBulletList ${showBullets ? "show" : ""}`}>
+              {introItems.map((item, i) => (
+                <li key={i} className="introBulletItem">
+                  <span className="introBulletDot" />
+                  <div className="introBulletContent">
+                    <span className="introBulletHeading">{item.title}</span>
+                    <span className="introBulletDesc">- {item.desc}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </div>

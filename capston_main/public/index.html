@@ -2,7 +2,10 @@
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, shrink-to-fit=no"
+    />
     <meta name="theme-color" content="#000000" />
 
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
@@ -18,7 +21,13 @@
 
     <div id="root"></div>
 
-    <form name="capstone-contact" method="POST" netlify netlify-honeypot="bot-field" hidden>
+    <form
+      name="capstone-contact"
+      method="POST"
+      data-netlify="true"
+      netlify-honeypot="bot-field"
+      hidden
+    >
       <input type="hidden" name="form-name" value="capstone-contact" />
       <input type="text" name="bot-field" />
       <input type="text" name="name" />

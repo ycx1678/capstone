@@ -1,5 +1,5 @@
-// src/components/sections/OrgSection.js
 import { useEffect, useRef, useState } from "react";
+import SectionLabel from "../SectionLabel";
 
 export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
   const t = styles?.themes?.[theme] ?? styles?.themes?.dark ?? {};
@@ -28,22 +28,30 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     ...divisions.map((d) => (Array.isArray(d?.teams) ? d.teams.length : 0))
   );
 
-  const lineColor = "rgba(255,255,255,0.24)";
+  const lineColor =
+    theme === "dark" ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.14)";
   const gold = styles?.brand?.base || "#C7A66A";
-  const goldSoftStrong = styles?.brand?.softStrong || "rgba(199,166,106,0.18)";
+  const goldSoftStrong =
+    styles?.brand?.softStrong || "rgba(199,166,106,0.18)";
   const goldBorder = styles?.brand?.border || "rgba(199,166,106,0.34)";
+  const goldBorderStrong =
+    styles?.brand?.borderStrong || "rgba(199,166,106,0.50)";
 
-  const PRIMARY_BG = "rgba(25,30,48,0.88)";
-  const PRIMARY_TEXT = "rgba(255,255,255,0.94)";
+  const PRIMARY_BG = "rgba(25,30,48,0.90)";
+  const PRIMARY_TEXT = "rgba(255,255,255,0.96)";
 
-  const DIV_BG = "rgba(255,255,255,0.96)";
+  const DIV_BG = "rgba(255,255,255,0.97)";
   const DIV_TEXT = "rgba(0,0,0,0.92)";
 
   const TEAM_BORDER = "rgba(255,255,255,0.78)";
-  const TEAM_TEXT = "rgba(255,255,255,0.92)";
-  const TEAM_BG = "rgba(255,255,255,0.04)";
+  const TEAM_TEXT = "rgba(255,255,255,0.94)";
+  const TEAM_BG = "rgba(255,255,255,0.05)";
 
-  const pad = isMobile ? 14 : 22;
+  const sectionLabel =
+    org?.sectionLabel || org?.tagTitle || org?.tagSub || "ABOUT US";
+  const showSectionLabel = org?.showSectionLabel !== false;
+
+  const pad = isMobile ? 18 : 30;
 
   const sectionStyle = {
     ...styles.section(theme, {
@@ -54,7 +62,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
 
   const contentWrap = {
     ...styles.container,
-    maxWidth: "1300px",
+    maxWidth: "1360px",
     margin: "0 auto",
     position: "relative",
     zIndex: 2,
@@ -62,14 +70,14 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
   };
 
   const cardWrap = {
-    marginTop: 24,
-    borderRadius: 22,
+    marginTop: isMobile ? 24 : 30,
+    borderRadius: isMobile ? 24 : 28,
     border: `1px solid ${t.border ?? "rgba(255,255,255,0.14)"}`,
-    background: "rgba(255,255,255,0.04)",
+    background: "rgba(255,255,255,0.045)",
     overflow: "hidden",
     position: "relative",
-    backdropFilter: "blur(8px)",
-    WebkitBackdropFilter: "blur(8px)",
+    backdropFilter: "blur(10px)",
+    WebkitBackdropFilter: "blur(10px)",
     boxShadow: "0 24px 60px rgba(0,0,0,0.24)",
     width: "100%",
     boxSizing: "border-box",
@@ -79,43 +87,54 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     background: PRIMARY_BG,
     color: PRIMARY_TEXT,
     fontWeight: 500,
-    fontSize: isMobile ? "13px" : "14px",
-    lineHeight: 1.25,
+    fontSize: isMobile ? "14px" : "16px",
+    lineHeight: 1.28,
     textAlign: "center",
-    padding: isMobile ? "9px 12px" : "11px 14px",
-    borderRadius: 12,
+    padding: isMobile ? "12px 14px" : "16px 18px",
+    borderRadius: 14,
     letterSpacing: "-0.02em",
     border: `1px solid ${goldBorder}`,
     boxShadow:
-      "0 10px 24px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)",
+      "0 12px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)",
     fontFamily: styles?.fonts?.body,
     wordBreak: "keep-all",
     boxSizing: "border-box",
+    minHeight: isMobile ? 48 : 58,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
   const ceoBox = {
     ...primaryBox,
     fontWeight: 700,
-    fontSize: isMobile ? "13.5px" : "14.5px",
+    fontSize: isMobile ? "15px" : "17px",
+    minHeight: isMobile ? 52 : 62,
+    border: `1px solid ${goldBorderStrong}`,
+    boxShadow: `0 14px 32px rgba(0,0,0,0.30), 0 0 0 1px rgba(199,166,106,0.08), 0 14px 38px ${goldSoftStrong}`,
   };
 
   const divisionHeader = {
     background: DIV_BG,
     color: DIV_TEXT,
-    fontWeight: 500,
-    fontSize: isMobile ? "13px" : "14px",
+    fontWeight: 700,
+    fontSize: isMobile ? "14px" : "15px",
     lineHeight: 1.25,
     textAlign: "center",
-    padding: isMobile ? "9px 12px" : "11px 14px",
-    borderRadius: 12,
+    padding: isMobile ? "12px 14px" : "15px 16px",
+    borderRadius: 14,
     letterSpacing: "-0.02em",
     boxShadow: "0 10px 24px rgba(0,0,0,0.22)",
     fontFamily: styles?.fonts?.body,
     wordBreak: "keep-all",
     boxSizing: "border-box",
+    minHeight: isMobile ? 48 : 56,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
   };
 
-  const teamRowH = isMobile ? 38 : 42;
+  const teamRowH = isMobile ? 42 : 48;
   const teamBox = {
     border: `1px solid ${TEAM_BORDER}`,
     color: TEAM_TEXT,
@@ -124,12 +143,12 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    padding: "0 10px",
-    borderRadius: 10,
+    padding: "0 12px",
+    borderRadius: 11,
     textAlign: "center",
     fontWeight: 500,
-    fontSize: isMobile ? "12px" : "13px",
-    lineHeight: 1.2,
+    fontSize: isMobile ? "12.5px" : "13.5px",
+    lineHeight: 1.22,
     letterSpacing: "-0.02em",
     fontFamily: styles?.fonts?.body,
     backdropFilter: "blur(6px)",
@@ -196,16 +215,16 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     const officeTopMinY = Math.min(...officeT.map((p) => p.y));
     const officeLineY = clamp(
       (ceoB.y + officeTopMinY) / 2,
-      ceoB.y + 8,
-      officeTopMinY - 8
+      ceoB.y + 10,
+      officeTopMinY - 10
     );
 
     const officeBottomMaxY = Math.max(...officeB.map((p) => p.y));
     const divTopMinY = Math.min(...divT.map((p) => p.y));
     const divLineY = clamp(
       (officeBottomMaxY + divTopMinY) / 2,
-      officeBottomMaxY + 8,
-      divTopMinY - 8
+      officeBottomMaxY + 10,
+      divTopMinY - 10
     );
 
     const officeLeftX = Math.min(officeT[0].x, officeT[1].x);
@@ -299,36 +318,18 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
       />
 
       <div style={contentWrap}>
-        <div style={{ marginBottom: 4 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              color: gold,
-              fontSize: styles?.type?.xs ?? "12px",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              fontFamily: styles?.fonts?.nav,
-            }}
-          >
-            <span
-              style={{
-                width: 34,
-                height: 1,
-                background: `linear-gradient(90deg, rgba(199,166,106,0.18), ${gold})`,
-              }}
-            />
-            <span>{org.tagTitle || "About us"}</span>
-          </div>
+        <div style={{ marginBottom: 6 }}>
+          {showSectionLabel && <SectionLabel text={sectionLabel} styles={styles} />}
 
           <div
             style={{
-              marginTop: 14,
+              marginTop: showSectionLabel ? 14 : 0,
               ...styles.titleText(theme, "h2", {
-                fontWeight: styles.type.weight.med,
+                fontWeight: styles.type.weight.semibold,
                 fontFamily: styles?.fonts?.display,
+                fontSize: isMobile
+                  ? "clamp(26px, 6.4vw, 34px)"
+                  : "clamp(34px, 3.35vw, 48px)",
               }),
             }}
           >
@@ -337,15 +338,17 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
 
           <div
             style={{
-              marginTop: 10,
+              marginTop: 12,
               ...styles.subText(theme, {
-                fontSize: styles.P,
+                fontSize: isMobile
+                  ? "clamp(14px, 3.5vw, 16px)"
+                  : "clamp(16px, 1.2vw, 18px)",
                 fontWeight: styles.type.weight.med,
                 fontFamily: styles?.fonts?.body,
-                lineHeight: 1.7,
+                lineHeight: 1.74,
               }),
               wordBreak: "keep-all",
-              maxWidth: isMobile ? "100%" : 1100,
+              maxWidth: isMobile ? "100%" : 1120,
             }}
           >
             {org.subtitle}
@@ -359,7 +362,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
               inset: 0,
               pointerEvents: "none",
               background:
-                "linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0))",
+                "linear-gradient(180deg, rgba(255,255,255,0.025), rgba(255,255,255,0))",
             }}
           />
 
@@ -381,7 +384,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                   d={d}
                   fill="none"
                   stroke={lineColor}
-                  strokeWidth={1}
+                  strokeWidth={1.2}
                   strokeLinecap="round"
                 />
               ))}
@@ -390,7 +393,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
             <div
               style={{
                 width: "100%",
-                maxWidth: isMobile ? "100%" : 680,
+                maxWidth: isMobile ? "100%" : 760,
                 margin: "0 auto",
                 position: "relative",
               }}
@@ -400,7 +403,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
               </div>
             </div>
 
-            <div style={{ height: isMobile ? 24 : 30 }} />
+            <div style={{ height: isMobile ? 28 : 36 }} />
 
             <div
               style={{
@@ -409,7 +412,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                 margin: "0 auto",
                 display: "grid",
                 gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
-                gap: isMobile ? 10 : 16,
+                gap: isMobile ? 12 : 18,
                 position: "relative",
               }}
             >
@@ -424,7 +427,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
               ))}
             </div>
 
-            <div style={{ height: isMobile ? 26 : 34 }} />
+            <div style={{ height: isMobile ? 30 : 40 }} />
 
             <div
               style={{
@@ -435,7 +438,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                 gridTemplateColumns: isMobile
                   ? "repeat(2, minmax(0, 1fr))"
                   : "repeat(4, minmax(0, 1fr))",
-                gap: isMobile ? 10 : 16,
+                gap: isMobile ? 12 : 18,
                 alignItems: "start",
                 position: "relative",
               }}
@@ -443,7 +446,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
               {divisions.map((d, i) => {
                 const teams = Array.isArray(d?.teams) ? d.teams : [];
                 return (
-                  <div key={i} style={{ display: "grid", gap: 8 }}>
+                  <div key={i} style={{ display: "grid", gap: 10 }}>
                     <div
                       ref={(el) => (divisionRefs.current[i] = el)}
                       style={divisionHeader}
@@ -454,7 +457,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                     <div
                       style={{
                         display: "grid",
-                        gap: 8,
+                        gap: 10,
                         gridAutoRows: `${teamRowH}px`,
                       }}
                     >
@@ -482,7 +485,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
               })}
             </div>
 
-            <div style={{ height: isMobile ? 4 : 8 }} />
+            <div style={{ height: isMobile ? 6 : 10 }} />
           </div>
         </div>
       </div>

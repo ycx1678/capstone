@@ -1,14 +1,14 @@
 // src/data/siteData.js
 
-export const STORAGE_KEY = "capstone_site_data_v2";
+export const STORAGE_KEY = "capstone_site_data_v3";
 
 export const defaultData = {
   brand: {
     logoText: "CAPSTONE",
     nav: [
-      { id: "org", label: "Organization" },
+      { id: "org", label: "About Us" },
       { id: "valuesWork", label: "Value&Work" },
-      { id: "fields", label: "Fields" },
+      { id: "fields", label: "Portfolio" },
       { id: "cases", label: "Cases" },
       { id: "contact", label: "Contact" },
     ],
@@ -29,6 +29,10 @@ export const defaultData = {
     keepAspectOnMobile: true,
     introVideoScaleMobile: 0.9,
     introVideoObjectPositionMobile: "center center",
+
+    // 로고 크기/품질 관련 섹션 컴포넌트에서 바로 활용 가능
+    introLogoScaleDesktop: 1.18,
+    introLogoScaleMobile: 1.12,
   },
 
   layout: {
@@ -52,8 +56,8 @@ export const defaultData = {
   },
 
   main: {
-    tagTitle: "About us",
-    tagSub: "회사소개",
+    tagTitle: "",
+    tagSub: "",
     title: "MICE 산업 전문기업",
     subtitle: "각 분야의 전문가들이 최고의 행사를 기획 및 운영합니다.",
     bullets: [
@@ -66,10 +70,14 @@ export const defaultData = {
   },
 
   org: {
-    tagTitle: "About us",
-    tagSub: "회사소개",
+    tagTitle: "",
+    tagSub: "",
     title: "조직도 및 인원 현황",
     subtitle: "실무 경력자들의 경험과 노하우를 보유한 전문가 집단",
+
+    // 상단 섹션명/강조문구 제어용
+    sectionLabel: "ABOUT US",
+    showSectionLabel: false,
 
     ceo: { title: "대표이사" },
 
@@ -84,9 +92,11 @@ export const defaultData = {
   },
 
   values: {
-    tagTitle: "About us",
-    tagSub: "회사소개",
+    tagTitle: "",
+    tagSub: "",
     title: "핵심가치",
+    accentLabel: "VALUE",
+    accentColorMode: "gold",
     items: [
       {
         title: "책임",
@@ -108,10 +118,12 @@ export const defaultData = {
   },
 
   work: {
-    tagTitle: "Business",
-    tagSub: "사업영역",
+    tagTitle: "",
+    tagSub: "",
     title: "주요 업무",
     subtitle: "안정된 행사 운영과 효율적인 업무 진행",
+    accentLabel: "WORK",
+    accentColorMode: "gold",
     backgroundImageSrc: "/Back_image/A-4.jpg",
     items: [
       {
@@ -150,17 +162,23 @@ export const defaultData = {
   },
 
   fields: {
-    tagTitle: "Business",
-    tagSub: "사업영역",
+    tagTitle: "Portfolio",
+    tagSub: "포트폴리오",
     title: "주요 사업분야",
     subtitle:
       "정부, 공공기관, 학술단체 및 민간기업 등이 개최하는 국내/외 행사",
+
+    // 화면 표시용 타이틀
+    displayTitle: "PORTFOLIO",
+    displayBottomLabel: "PORTFOLIO",
+
     summaryLines: [
       "VIP, 국무총리, 장관급 등 격식 행사",
       "국제회의, 컨퍼런스, 포럼, 심포지엄, 학술대회, 세미나 등 학술관련 행사",
       "기념식, 시상식, 비전선포식, 프로모션 등 부대 행사",
       "온라인 및 하이브리드 행사",
     ],
+
     rollingPhotos: [
       { src: "", label: "KoNECT 컨퍼런스" },
       { src: "", label: "14th IPVE 심포지엄" },
@@ -173,8 +191,10 @@ export const defaultData = {
   cases: {
     tagTitle: "Business",
     tagSub: "사업영역",
+    sectionLabel: "CASES",
     blocks: [
       {
+        eyebrow: "CASES",
         title: "대형 행사 경험과 노하우 보유",
         subtitle: "VIP, 국무총리, 장관급 행사 등",
         images: [
@@ -186,6 +206,7 @@ export const defaultData = {
         ],
       },
       {
+        eyebrow: "CASES",
         title: "컨퍼런스, 심포지엄 등 학술관련 프로그램 운영의 전문성 보유",
         subtitle: "컨퍼런스, 심포지엄, 학술대회, 세미나 등",
         images: [
@@ -197,6 +218,7 @@ export const defaultData = {
         ],
       },
       {
+        eyebrow: "CASES",
         title: "부대행사 실행 능력의 전문성 보유",
         subtitle: "비전선포식, 기념식, MOU 등",
         images: [
@@ -213,7 +235,7 @@ export const defaultData = {
     title: "CONTACT",
     desc: "여러분과 언제든 함께할 수 있도록 24시간 열려 있습니다.\n간단한 정보를 작성해주시면, 빠른 시일 내에 회신 드리겠습니다 :)",
     companyName: "주식회사 캡스톤그룹",
-    address: "서울시 서대문구 신촌로25, 2층(창천동, 상록빌딩)",
+    address: "서울시 서대문구 신촌로 25, (창천동, 상록빌딩)",
     tel: "02-6010-8500",
     email: "info@capstone-pco.com",
   },

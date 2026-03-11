@@ -9,13 +9,13 @@ export default function IntroSection({
   introBg = "#0B0D12",
 }) {
   const main = data?.main || {};
+
   const bgImages = Array.isArray(data?.sectionBg?.intro)
     ? data.sectionBg.intro.filter(Boolean)
     : [];
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [prevIndex, setPrevIndex] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
 
   const [showText, setShowText] = useState(false);
   const [showBullets, setShowBullets] = useState(false);
@@ -24,40 +24,55 @@ export default function IntroSection({
   const [canvasFade, setCanvasFade] = useState(false);
   const [showBg, setShowBg] = useState(false);
 
+  const [bgCrossfade, setBgCrossfade] = useState(false);
+
   const firedRef = useRef(false);
+  const activeIndexRef = useRef(0);
+
   const timers = useRef([]);
-  const intervalRef = useRef(null);
-  const fadeTimerRef = useRef(null);
+  const slideIntervalRef = useRef(null);
+  const crossfadeTimerRef = useRef(null);
+
+  const logoSrc = "/capstone_logo_remove.png";
+  const logoScale = isMobile ? 1.22 : 1.38;
 
   const clearAllTimers = () => {
     timers.current.forEach(clearTimeout);
     timers.current = [];
 
-    if (intervalRef.current) clearInterval(intervalRef.current);
-    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    if (slideIntervalRef.current) {
+      clearInterval(slideIntervalRef.current);
+      slideIntervalRef.current = null;
+    }
+
+    if (crossfadeTimerRef.current) {
+      clearTimeout(crossfadeTimerRef.current);
+      crossfadeTimerRef.current = null;
+    }
   };
 
+  // ✅ 로고 -> 사라짐 -> 배경 -> 텍스트
   const onLogoDone = () => {
     if (firedRef.current) return;
     firedRef.current = true;
 
-    timers.current.push(setTimeout(() => setCanvasFade(true), 900));
-    timers.current.push(setTimeout(() => setShowBg(true), 1100));
-    timers.current.push(setTimeout(() => setShowText(true), 1450));
-    timers.current.push(setTimeout(() => setShowBullets(true), 1750));
-    timers.current.push(setTimeout(() => setCanvasVisible(false), 2100));
+    timers.current.push(setTimeout(() => setCanvasFade(true), 1100));
+    timers.current.push(setTimeout(() => setShowBg(true), 2050));
+    timers.current.push(setTimeout(() => setShowText(true), 2800));
+    timers.current.push(setTimeout(() => setShowBullets(true), 3150));
+    timers.current.push(setTimeout(() => setCanvasVisible(false), 3300));
   };
 
   useEffect(() => {
     return () => clearAllTimers();
   }, []);
 
-  // preload
   useEffect(() => {
     if (!bgImages.length) return;
 
     const imgs = bgImages.map((src) => {
       const img = new Image();
+      img.decoding = "async";
       img.src = src;
       return img;
     });
@@ -67,36 +82,53 @@ export default function IntroSection({
     };
   }, [bgImages]);
 
-  // smooth background loop
+  useEffect(() => {
+    const img = new Image();
+    img.decoding = "async";
+    img.src = logoSrc;
+  }, []);
+
+  // ✅ 배경은 항상 2레이어 유지하고 opacity만 교차
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
 
-    intervalRef.current = setInterval(() => {
-      setPrevIndex((currPrev) => {
-        return activeIndex;
+    const SLIDE_MS = 7600;
+    const FADE_MS = 2600;
+
+    slideIntervalRef.current = setInterval(() => {
+      const current = activeIndexRef.current;
+      const next = (current + 1) % bgImages.length;
+
+      setPrevIndex(current);
+      setActiveIndex(next);
+
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setBgCrossfade(true);
+        });
       });
 
-      setActiveIndex((prev) => {
-        const next = (prev + 1) % bgImages.length;
-        return next;
-      });
+      activeIndexRef.current = next;
 
-      setIsTransitioning(true);
-
-      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
-      fadeTimerRef.current = setTimeout(() => {
-        setIsTransitioning(false);
-      }, 1600);
-    }, 3000);
+      if (crossfadeTimerRef.current) clearTimeout(crossfadeTimerRef.current);
+      crossfadeTimerRef.current = setTimeout(() => {
+        setBgCrossfade(false);
+      }, FADE_MS);
+    }, SLIDE_MS);
 
     return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+      if (slideIntervalRef.current) {
+        clearInterval(slideIntervalRef.current);
+        slideIntervalRef.current = null;
+      }
+      if (crossfadeTimerRef.current) {
+        clearTimeout(crossfadeTimerRef.current);
+        crossfadeTimerRef.current = null;
+      }
     };
-  }, [showBg, bgImages.length, activeIndex]);
+  }, [showBg, bgImages.length]);
 
   const padTop = headerIsFixed ? headerHeight : 0;
-
   const currentBg = bgImages[activeIndex] || "";
   const previousBg = bgImages[prevIndex] || currentBg;
 
@@ -122,20 +154,24 @@ export default function IntroSection({
           background-size: cover;
           background-repeat: no-repeat;
           will-change: opacity, transform;
-          transform: scale(1.03);
+          backface-visibility: hidden;
+          transform: translateZ(0);
         }
 
-        .introBgCurrent,
         .introBgPrev {
-          transition: opacity 1600ms ease-in-out;
+          opacity: ${showBg ? (bgCrossfade ? 0.88 : 0) : 0};
+          transform: scale(${bgCrossfade ? 1.035 : 1.02});
+          transition:
+            opacity 2200ms ease-in-out,
+            transform 2200ms ease-in-out;
         }
 
-        .introBgVisible {
+        .introBgCurrent {
           opacity: ${showBg ? 0.88 : 0};
-        }
-
-        .introBgHidden {
-          opacity: 0;
+          transform: scale(${bgCrossfade ? 1.02 : 1.035});
+          transition:
+            opacity 2200ms ease-in-out,
+            transform 2200ms ease-in-out;
         }
 
         .introBgGradient {
@@ -145,10 +181,10 @@ export default function IntroSection({
           background:
             linear-gradient(
               90deg,
-              rgba(8,10,15,0.72) 0%,
-              rgba(8,10,15,0.52) 34%,
-              rgba(8,10,15,0.22) 68%,
-              rgba(8,10,15,0.08) 100%
+              rgba(8,10,15,0.80) 0%,
+              rgba(8,10,15,0.62) 34%,
+              rgba(8,10,15,0.30) 68%,
+              rgba(8,10,15,0.14) 100%
             );
           pointer-events: none;
         }
@@ -159,7 +195,7 @@ export default function IntroSection({
           z-index: 1;
           pointer-events: none;
           background:
-            radial-gradient(900px 520px at 78% 28%, rgba(199,166,106,0.10), transparent 62%),
+            radial-gradient(900px 520px at 78% 28%, rgba(199,166,106,0.12), transparent 62%),
             radial-gradient(760px 440px at 18% 72%, rgba(255,255,255,0.05), transparent 66%);
         }
 
@@ -187,14 +223,14 @@ export default function IntroSection({
         }
 
         .introInner {
-          width: min(1300px, 92vw);
+          width: min(1340px, 92vw);
           margin: 0 auto;
           display: flex;
           justify-content: flex-start;
         }
 
         .introTextWrap {
-          width: ${isMobile ? "100%" : "min(720px, 52vw)"};
+          width: ${isMobile ? "100%" : "min(760px, 54vw)"};
           display: grid;
           gap: ${isMobile ? "14px" : "20px"};
           opacity: 0;
@@ -210,7 +246,7 @@ export default function IntroSection({
         .introTitle {
           margin: 0;
           font-size: ${
-            isMobile ? "clamp(32px, 9vw, 42px)" : "clamp(48px, 5vw, 72px)"
+            isMobile ? "clamp(32px, 9vw, 42px)" : "clamp(50px, 5vw, 74px)"
           };
           font-weight: 700;
           letter-spacing: -0.04em;
@@ -224,20 +260,20 @@ export default function IntroSection({
           margin: 0;
           font-size: ${isMobile ? "15px" : "18px"};
           font-weight: 500;
-          line-height: 1.8;
-          color: rgba(255,255,255,0.86);
-          max-width: 56ch;
+          line-height: 1.82;
+          color: rgba(255,255,255,0.88);
+          max-width: 58ch;
           white-space: pre-line;
           word-break: keep-all;
           text-shadow: 0 8px 24px rgba(0,0,0,0.18);
         }
 
         .introBulletList {
-          margin: 0;
+          margin: 4px 0 0;
           padding: 0;
           list-style: none;
           display: grid;
-          gap: 12px;
+          gap: ${isMobile ? "10px" : "12px"};
           opacity: 0;
           transform: translateY(16px);
           transition: opacity 700ms ease, transform 700ms ease;
@@ -254,7 +290,7 @@ export default function IntroSection({
           font-size: ${isMobile ? "14px" : "16px"};
           font-weight: 500;
           color: #fff;
-          line-height: 1.7;
+          line-height: 1.72;
           word-break: keep-all;
           text-shadow: 0 8px 24px rgba(0,0,0,0.16);
         }
@@ -269,7 +305,7 @@ export default function IntroSection({
           flex: 0 0 auto;
         }
 
-        @media (max-width:768px) {
+        @media (max-width: 768px) {
           .introGrid {
             align-items: flex-end;
           }
@@ -283,19 +319,15 @@ export default function IntroSection({
       {bgImages.length > 0 && (
         <>
           <div
-            className={`introBgLayer introBgPrev ${
-              isTransitioning ? "introBgVisible" : "introBgHidden"
-            }`}
+            className="introBgLayer introBgPrev"
             style={{
-              backgroundImage: `url(${currentBg})`,
+              backgroundImage: `url(${previousBg})`,
             }}
           />
           <div
-            className={`introBgLayer introBgCurrent ${
-              isTransitioning ? "introBgHidden" : "introBgVisible"
-            }`}
+            className="introBgLayer introBgCurrent"
             style={{
-              backgroundImage: `url(${previousBg})`,
+              backgroundImage: `url(${currentBg})`,
             }}
           />
         </>
@@ -307,14 +339,19 @@ export default function IntroSection({
       {canvasVisible && (
         <div className={`introCanvasWrap ${canvasFade ? "fade" : ""}`}>
           <LogoParticleMorphCanvas
-            src="/capstone_logo_remove.png"
+            src={logoSrc}
             bg={introBg}
-            color={"199,166,106"}
-            density={1400}
+            color="199,166,106"
+            density={isMobile ? 900 : 1400}
             oneShot={true}
             onComplete={onLogoDone}
             centerOffsetY={0}
-            logoScale={1.22}
+            logoScale={logoScale}
+            dprCap={isMobile ? 3 : 5}
+            overlayOversample={isMobile ? 2.2 : 3.2}
+            overlayStrength={1}
+            logoFitW={isMobile ? 0.82 : 0.66}
+            logoFitH={isMobile ? 0.24 : 0.28}
           />
         </div>
       )}

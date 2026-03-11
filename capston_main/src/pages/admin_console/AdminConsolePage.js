@@ -37,52 +37,24 @@ import {
 import { uploadImage } from "./adminImage";
 import { CASE_SLOTS, ensureCaseSlots, setBlockImages } from "./adminCases";
 
-/**
- * Capstone Admin (Images + Cases Caption) - SPLIT
- * - 접근: #/admin
- * - 업로드 대상:
- *   1) fields.rollingPhotos[].src
- *   2) cases.blocks[].images[].src (+ title, lines 편집)
- *
- * ✅ Org (코드 기반 조직도):
- * - org.ceo.title
- * - org.offices[].title
- * - org.divisions[].title
- * (레이아웃은 OrgSection에서 코드로 고정)
- *
- * ✅ Cases images:
- * - 블록마다 8슬롯 고정
- * - 이미지 업로드/교체/삭제
- * - 드래그 정렬
- * - 타이틀 + 라인(최대 5줄) 편집 가능
- *
- * ✅ Admin PIN Gate 포함
- * ✅ 탭(Org/Fields/Cases) 분리
- * ✅ 백업 다운로드/불러오기 추가
- */
-
 export default function AdminConsolePage({ data, setData, saveError }) {
   const isMobile = useIsMobile(860);
   const [forceOpen, setForceOpen] = useState(false);
 
-  // ✅ 탭
   const [tab, setTab] = useState("cases");
 
-  // ✅ PIN gate hooks (always called)
   const expectedPin = useMemo(() => getExpectedPin(), []);
   const [authed, setAuthed] = useState(() => !!getSavedAuth());
   const [pin, setPin] = useState("");
   const [remember, setRemember] = useState(true);
   const [fail, setFail] = useState(() => getFailState());
 
-  // ✅ fail null 방어
   const failSafe = fail || { count: 0, lockUntil: 0 };
   const locked = Number(failSafe.lockUntil || 0) > nowMs();
   const lockRemainSec = locked
     ? Math.ceil((Number(failSafe.lockUntil) - nowMs()) / 1000)
     : 0;
 
-  // 업로드 옵션
   const [maxDim, setMaxDim] = useState(1600);
   const [quality, setQuality] = useState(0.8);
   const imageOpts = useMemo(() => ({ maxDim, quality }), [maxDim, quality]);
@@ -103,7 +75,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     return () => toastTimer.current && clearTimeout(toastTimer.current);
   }, []);
 
-  // PIN lock countdown 갱신
   useEffect(() => {
     if (!locked) return;
     const id = setInterval(() => setFail(getFailState()), 500);
@@ -176,7 +147,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     showToast("초기화 완료", "ok");
   }, [setData, showToast]);
 
-  // ✅ 백업 다운로드
   const downloadBackup = useCallback(() => {
     try {
       const s = JSON.stringify(data || {}, null, 2);
@@ -194,7 +164,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     }
   }, [data, showToast]);
 
-  // ✅ 백업 불러오기
   const importBackupFile = useCallback(
     async (file) => {
       if (!file) return;
@@ -214,7 +183,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
           throw new Error("Invalid JSON");
         }
 
-        // 너무 엄격하지 않게 최소 shape만 체크
         if (!parsed.org || !parsed.fields || !parsed.cases) {
           throw new Error("Backup shape mismatch");
         }
@@ -272,18 +240,19 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     [showToast, updateByPath]
   );
 
-  // sources
   const rollingPhotos = (data?.fields?.rollingPhotos || []).map((p) => ({
     ...p,
     label: p?.label || "",
     src: p?.src || "",
   }));
+
   const casesBlocks = (data?.cases?.blocks || []).map((b) => ({
     ...b,
     images: Array.isArray(b?.images) ? b.images : [],
   }));
 
-  // Cases: block ops
+  const navItems = Array.isArray(data?.brand?.nav) ? data.brand.nav : [];
+
   const addCaseBlock = useCallback(() => {
     mutate((next) => {
       const blocks = Array.isArray(next?.cases?.blocks)
@@ -292,13 +261,13 @@ export default function AdminConsolePage({ data, setData, saveError }) {
       const base =
         blocks[0] != null
           ? deepClone(blocks[0])
-          : { title: "New Block", images: [] };
+          : { eyebrow: "CASES", title: "New Block", subtitle: "", images: [] };
 
       base.images = [];
+      base.eyebrow = base.eyebrow || "CASES";
       if (typeof base.title === "string")
         base.title = `New Block ${blocks.length + 1}`;
-      if (typeof base.name === "string")
-        base.name = `New Block ${blocks.length + 1}`;
+      if (typeof base.subtitle !== "string") base.subtitle = "";
 
       if (!next.cases) next.cases = {};
       next.cases.blocks = [...blocks, base];
@@ -342,7 +311,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     [mutate]
   );
 
-  // ✅ Cases: 8슬롯 기반 이미지/문구 편집
   const setCaseSlot = useCallback(
     (blockIdx, slotIdx, patch) => {
       mutate((next) => {
@@ -407,7 +375,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     [mutate]
   );
 
-  // Drag handlers (PC)
   const onDragStartBlock = (idx) => (e) => {
     dragRef.current = { type: "block", from: idx, blockIdx: null };
     try {
@@ -445,7 +412,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
     dragRef.current = { type: null, from: null, blockIdx: null };
   };
 
-  // ✅ PIN 통과 후에만 모바일 게이트 적용
   const showMobileGate = authed && isMobile && !forceOpen;
 
   const padX = "clamp(16px, 4vw, 40px)";
@@ -459,7 +425,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
         body { overflow-x: auto; }
       `}</style>
 
-      {/* ✅ 1) PIN Gate */}
       {!authed ? (
         <div style={{ padding: `22px ${padX} 40px` }}>
           <AdminPinGate
@@ -477,13 +442,11 @@ export default function AdminConsolePage({ data, setData, saveError }) {
         </div>
       ) : (
         <>
-          {/* ✅ 2) 모바일 게이트 */}
           {showMobileGate ? (
             <AdminMobileGate ui={ui} onForceOpen={() => setForceOpen(true)} />
           ) : (
             <div style={{ padding: `22px ${padX} 40px` }}>
               <div style={container}>
-                {/* Top bar */}
                 <div style={ui.topbar}>
                   <div style={{ minWidth: 0 }}>
                     <div style={ui.h1}>Capstone Admin</div>
@@ -557,7 +520,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
                   </div>
                 </div>
 
-                {/* 탭 */}
                 <AdminTabs ui={ui} tab={tab} setTab={setTab} />
 
                 {saveError ? (
@@ -618,7 +580,6 @@ export default function AdminConsolePage({ data, setData, saveError }) {
                   </div>
                 ) : null}
 
-                {/* Upload settings (항상 표시) */}
                 <AdminCard
                   ui={ui}
                   title="업로드 압축 옵션"
@@ -699,299 +660,751 @@ export default function AdminConsolePage({ data, setData, saveError }) {
                   </div>
                 </AdminCard>
 
-                {/* ✅ Org 탭 (코드 기반) */}
                 {tab === "org" ? (
-                  <AdminCard
-                    ui={ui}
-                    title="조직도 (코드 기반)"
-                    sub="org.ceo.title / org.offices[].title / org.divisions[].title"
-                  >
-                    {/* ✅ 잘림 방지: minWidth:0 + overflowX:auto */}
-                    <div
-                      style={{
-                        display: "grid",
-                        gap: 16,
-                        minWidth: 0,
-                        overflowX: "auto",
-                      }}
+                  <>
+                    <AdminCard
+                      ui={ui}
+                      title="헤더 메뉴 / 공통 라벨"
+                      sub="클라이언트 요청사항에 맞는 메뉴 텍스트를 수정합니다."
                     >
-                      {/* CEO */}
-                      <div style={ui.blockShell}>
-                        <div style={ui.fieldLabel}>대표 (CEO)</div>
-                        <div style={ui.monoLine}>org.ceo.title</div>
-                        <input
-                          value={data?.org?.ceo?.title ?? ""}
-                          onChange={(e) =>
-                            updateByPath("org.ceo.title", e.target.value)
-                          }
-                          style={{ ...ui.input, width: "100%" }}
-                          placeholder="대표이사"
-                        />
-                      </div>
-
-                      {/* Offices */}
-                      <div style={ui.blockShell}>
-                        <div style={ui.fieldLabel}>실 (2개)</div>
-                        <div style={ui.sizeHint}>전략기획실 / 경영지원실</div>
-
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: isMobile
-                              ? "minmax(0, 1fr)"
-                              : "repeat(2, minmax(0, 1fr))",
-                            gap: 10,
-                            marginTop: 10,
-                          }}
-                        >
-                          {Array.from({ length: 2 }).map((_, idx) => {
-                            const path = `org.offices[${idx}].title`;
-                            const v = data?.org?.offices?.[idx]?.title ?? "";
-                            return (
-                              <div
-                                key={idx}
-                                style={{ display: "grid", gap: 6, minWidth: 0 }}
-                              >
-                                <div
-                                  style={{
-                                    ...ui.monoLine,
-                                    whiteSpace: "normal",
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {path}
-                                </div>
-                                <input
-                                  value={v}
-                                  onChange={(e) =>
-                                    updateByPath(path, e.target.value)
-                                  }
-                                  style={{ ...ui.input, width: "100%" }}
-                                  placeholder={
-                                    idx === 0 ? "전략기획실" : "경영지원실"
-                                  }
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <div style={{ marginTop: 10, ...ui.sizeHint }}>
-                          ※ offices 배열이 비어있어도 OrgSection에서 기본값으로
-                          표시됩니다.
-                        </div>
-                      </div>
-
-                      {/* Divisions */}
-                      <div style={ui.blockShell}>
-                        <div style={ui.fieldLabel}>본부 (4개)</div>
-                        <div style={ui.sizeHint}>
-                          기획 / 디자인 / 온라인 / 영상제작
-                        </div>
-
-                        <div
-                          style={{
-                            display: "grid",
-                            gridTemplateColumns: isMobile
-                              ? "minmax(0, 1fr)"
-                              : "repeat(2, minmax(0, 1fr))",
-                            gap: 10,
-                            marginTop: 10,
-                          }}
-                        >
-                          {Array.from({ length: 4 }).map((_, idx) => {
-                            const path = `org.divisions[${idx}].title`;
-                            const v = data?.org?.divisions?.[idx]?.title ?? "";
-                            return (
-                              <div
-                                key={idx}
-                                style={{ display: "grid", gap: 6, minWidth: 0 }}
-                              >
-                                <div
-                                  style={{
-                                    ...ui.monoLine,
-                                    whiteSpace: "normal",
-                                    overflowWrap: "anywhere",
-                                  }}
-                                >
-                                  {path}
-                                </div>
-                                <input
-                                  value={v}
-                                  onChange={(e) =>
-                                    updateByPath(path, e.target.value)
-                                  }
-                                  style={{ ...ui.input, width: "100%" }}
-                                  placeholder={
-                                    [
-                                      "기획 본부",
-                                      "디자인 본부",
-                                      "온라인 본부",
-                                      "영상제작 본부",
-                                    ][idx]
-                                  }
-                                />
-                              </div>
-                            );
-                          })}
-                        </div>
-
-                        <div style={{ marginTop: 10, ...ui.sizeHint }}>
-                          ※ TEAM 텍스트는 현재 data.org.divisions[].teams를
-                          사용합니다. 필요하면 Admin 편집 UI도 추가 가능합니다.
-                        </div>
-                      </div>
-
-                      {/* quick fix */}
                       <div
-                        style={{ display: "flex", gap: 10, flexWrap: "wrap" }}
+                        style={{
+                          display: "grid",
+                          gap: 14,
+                          minWidth: 0,
+                          overflowX: "auto",
+                        }}
                       >
-                        <button
-                          type="button"
-                          style={{ ...ui.btn, ...ui.btnGhost }}
-                          onClick={() => {
-                            mutate((next) => {
-                              if (!next.org) next.org = {};
-                              if (!next.org.ceo)
-                                next.org.ceo = { title: "대표이사" };
-
-                              if (
-                                !Array.isArray(next.org.offices) ||
-                                next.org.offices.length < 2
-                              ) {
-                                next.org.offices = [
-                                  { title: "전략기획실" },
-                                  { title: "경영지원실" },
-                                ];
-                              }
-
-                              if (
-                                !Array.isArray(next.org.divisions) ||
-                                next.org.divisions.length < 4
-                              ) {
-                                next.org.divisions = [
-                                  {
-                                    title: "기획 본부",
-                                    teams: ["1 TEAM", "2 TEAM", "3 TEAM"],
-                                  },
-                                  {
-                                    title: "디자인 본부",
-                                    teams: ["1 TEAM", "2 TEAM"],
-                                  },
-                                  {
-                                    title: "온라인 본부",
-                                    teams: ["1 TEAM", "2 TEAM"],
-                                  },
-                                  { title: "영상제작 본부", teams: ["1 TEAM"] },
-                                ];
-                              }
-                            });
-                            showToast("조직도 기본 골격 생성", "ok");
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: isMobile
+                              ? "minmax(0, 1fr)"
+                              : "repeat(2, minmax(0, 1fr))",
+                            gap: 12,
                           }}
-                          disabled={busy}
                         >
-                          org 기본 골격 생성
-                        </button>
-                      </div>
-                    </div>
-                  </AdminCard>
-                ) : null}
-
-                {/* Fields 탭 */}
-                {tab === "fields" ? (
-                  <AdminCard
-                    ui={ui}
-                    title="사업분야 롤링 이미지"
-                    sub="fields.rollingPhotos[].src / label 수정 가능"
-                  >
-                    <div style={ui.grid}>
-                      {rollingPhotos.map((p, idx) => {
-                        const srcPath = `fields.rollingPhotos[${idx}].src`;
-                        const labelPath = `fields.rollingPhotos[${idx}].label`;
-                        const bytes = p.src ? estimateDataUrlBytes(p.src) : 0;
-
-                        return (
-                          <div key={idx} style={ui.gridItem}>
-                            <div style={ui.gridHeader}>
-                              <div style={{ minWidth: 0 }}>
-                                <div style={ui.gridTitle}>
-                                  {p.label || `Rolling #${idx + 1}`}
+                          {navItems.map((item, idx) => {
+                            const path = `brand.nav[${idx}].label`;
+                            return (
+                              <div
+                                key={idx}
+                                style={{ display: "grid", gap: 6, minWidth: 0 }}
+                              >
+                                <div
+                                  style={{
+                                    ...ui.monoLine,
+                                    whiteSpace: "normal",
+                                    overflowWrap: "anywhere",
+                                  }}
+                                >
+                                  {path}
                                 </div>
-
-                                <div style={ui.monoLine}>{srcPath}</div>
-
-                                {bytes ? (
-                                  <div style={ui.sizeHint}>
-                                    Stored: {humanBytes(bytes)}
-                                  </div>
-                                ) : null}
+                                <input
+                                  value={item?.label ?? ""}
+                                  onChange={(e) =>
+                                    updateByPath(path, e.target.value)
+                                  }
+                                  style={{ ...ui.input, width: "100%" }}
+                                  placeholder={
+                                    idx === 0
+                                      ? "About Us"
+                                      : idx === 1
+                                      ? "Value&Work"
+                                      : idx === 2
+                                      ? "Portfolio"
+                                      : idx === 3
+                                      ? "Cases"
+                                      : "Contact"
+                                  }
+                                />
                               </div>
-                            </div>
+                            );
+                          })}
+                        </div>
 
-                            <AdminPreview ui={ui} src={p.src} />
+                        <div
+                          style={{ display: "flex", gap: 10, flexWrap: "wrap" }}
+                        >
+                          <button
+                            type="button"
+                            style={{ ...ui.btn, ...ui.btnGhost }}
+                            onClick={() => {
+                              mutate((next) => {
+                                if (!next.brand) next.brand = {};
+                                if (!Array.isArray(next.brand.nav)) {
+                                  next.brand.nav = [];
+                                }
+                                const base = [
+                                  { id: "org", label: "About Us" },
+                                  { id: "valuesWork", label: "Value&Work" },
+                                  { id: "fields", label: "Portfolio" },
+                                  { id: "cases", label: "Cases" },
+                                  { id: "contact", label: "Contact" },
+                                ];
+                                next.brand.nav = base;
+                              });
+                              showToast("헤더 메뉴 기본값 적용", "ok");
+                            }}
+                            disabled={busy}
+                          >
+                            헤더 메뉴 기본값 적용
+                          </button>
+                        </div>
+                      </div>
+                    </AdminCard>
 
-                            {/* 🔹 label 수정 input */}
-                            <div style={{ marginTop: 10 }}>
-                              <div style={ui.fieldLabel}>제목(label)</div>
+                    <AdminCard
+                      ui={ui}
+                      title="조직도 (코드 기반)"
+                      sub="org.title / subtitle / sectionLabel / showSectionLabel / ceo / offices / divisions"
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gap: 16,
+                          minWidth: 0,
+                          overflowX: "auto",
+                        }}
+                      >
+                        <div style={ui.blockShell}>
+                          <div style={ui.fieldLabel}>섹션 제목</div>
+                          <div style={ui.monoLine}>org.title</div>
+                          <input
+                            value={data?.org?.title ?? ""}
+                            onChange={(e) =>
+                              updateByPath("org.title", e.target.value)
+                            }
+                            style={{ ...ui.input, width: "100%" }}
+                            placeholder="조직도 및 인원 현황"
+                          />
 
+                          <div style={{ ...ui.fieldLabel, marginTop: 12 }}>
+                            섹션 설명
+                          </div>
+                          <div style={ui.monoLine}>org.subtitle</div>
+                          <textarea
+                            value={data?.org?.subtitle ?? ""}
+                            onChange={(e) =>
+                              updateByPath("org.subtitle", e.target.value)
+                            }
+                            style={{ ...ui.textarea, width: "100%" }}
+                            placeholder="실무 경력자들의 경험과 노하우를 보유한 전문가 집단"
+                          />
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: isMobile
+                                ? "1fr"
+                                : "1fr 1fr",
+                              gap: 12,
+                              marginTop: 12,
+                            }}
+                          >
+                            <div style={{ display: "grid", gap: 6 }}>
+                              <div style={ui.fieldLabel}>상단 라벨 문구</div>
+                              <div style={ui.monoLine}>org.sectionLabel</div>
                               <input
-                                value={p.label || ""}
+                                value={data?.org?.sectionLabel ?? ""}
                                 onChange={(e) =>
-                                  updateByPath(labelPath, e.target.value)
+                                  updateByPath("org.sectionLabel", e.target.value)
                                 }
                                 style={ui.input}
-                                placeholder="예: 국제회의 / Exhibition / Conference"
+                                placeholder="ABOUT US"
                               />
                             </div>
 
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: 10,
-                                flexWrap: "wrap",
-                                marginTop: 10,
-                              }}
-                            >
+                            <div style={{ display: "grid", gap: 8 }}>
+                              <div style={ui.fieldLabel}>상단 라벨 표시 여부</div>
                               <label
                                 style={{
-                                  ...ui.btn,
-                                  ...ui.btnPrimary,
-                                  cursor: busy ? "not-allowed" : "pointer",
+                                  display: "inline-flex",
+                                  alignItems: "center",
+                                  gap: 8,
                                 }}
                               >
-                                업로드
                                 <input
-                                  type="file"
-                                  accept="image/*"
-                                  style={{ display: "none" }}
-                                  disabled={busy}
-                                  onChange={(e) => {
-                                    const f = e.target.files?.[0] || null;
-                                    e.target.value = "";
-                                    uploadToPath(srcPath, f);
-                                  }}
+                                  type="checkbox"
+                                  checked={data?.org?.showSectionLabel !== false}
+                                  onChange={(e) =>
+                                    updateByPath(
+                                      "org.showSectionLabel",
+                                      e.target.checked
+                                    )
+                                  }
                                 />
+                                <span style={ui.sizeHint}>
+                                  체크 시 ABOUT US 라벨 표시
+                                </span>
                               </label>
-
-                              <button
-                                type="button"
-                                style={{ ...ui.btn, ...ui.btnDanger }}
-                                onClick={() => clearPath(srcPath)}
-                                disabled={busy || !p.src}
-                              >
-                                삭제
-                              </button>
                             </div>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </AdminCard>
+                        </div>
+
+                        <div style={ui.blockShell}>
+                          <div style={ui.fieldLabel}>대표 (CEO)</div>
+                          <div style={ui.monoLine}>org.ceo.title</div>
+                          <input
+                            value={data?.org?.ceo?.title ?? ""}
+                            onChange={(e) =>
+                              updateByPath("org.ceo.title", e.target.value)
+                            }
+                            style={{ ...ui.input, width: "100%" }}
+                            placeholder="대표이사"
+                          />
+                        </div>
+
+                        <div style={ui.blockShell}>
+                          <div style={ui.fieldLabel}>실 (2개)</div>
+                          <div style={ui.sizeHint}>전략기획실 / 경영지원실</div>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: isMobile
+                                ? "minmax(0, 1fr)"
+                                : "repeat(2, minmax(0, 1fr))",
+                              gap: 10,
+                              marginTop: 10,
+                            }}
+                          >
+                            {Array.from({ length: 2 }).map((_, idx) => {
+                              const path = `org.offices[${idx}].title`;
+                              const v = data?.org?.offices?.[idx]?.title ?? "";
+                              return (
+                                <div
+                                  key={idx}
+                                  style={{ display: "grid", gap: 6, minWidth: 0 }}
+                                >
+                                  <div
+                                    style={{
+                                      ...ui.monoLine,
+                                      whiteSpace: "normal",
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {path}
+                                  </div>
+                                  <input
+                                    value={v}
+                                    onChange={(e) =>
+                                      updateByPath(path, e.target.value)
+                                    }
+                                    style={{ ...ui.input, width: "100%" }}
+                                    placeholder={
+                                      idx === 0 ? "전략기획실" : "경영지원실"
+                                    }
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div style={ui.blockShell}>
+                          <div style={ui.fieldLabel}>본부 (4개)</div>
+                          <div style={ui.sizeHint}>
+                            기획 / 디자인 / 온라인 / 영상제작
+                          </div>
+
+                          <div
+                            style={{
+                              display: "grid",
+                              gridTemplateColumns: isMobile
+                                ? "minmax(0, 1fr)"
+                                : "repeat(2, minmax(0, 1fr))",
+                              gap: 10,
+                              marginTop: 10,
+                            }}
+                          >
+                            {Array.from({ length: 4 }).map((_, idx) => {
+                              const titlePath = `org.divisions[${idx}].title`;
+                              const v =
+                                data?.org?.divisions?.[idx]?.title ?? "";
+                              return (
+                                <div
+                                  key={idx}
+                                  style={{ display: "grid", gap: 6, minWidth: 0 }}
+                                >
+                                  <div
+                                    style={{
+                                      ...ui.monoLine,
+                                      whiteSpace: "normal",
+                                      overflowWrap: "anywhere",
+                                    }}
+                                  >
+                                    {titlePath}
+                                  </div>
+                                  <input
+                                    value={v}
+                                    onChange={(e) =>
+                                      updateByPath(titlePath, e.target.value)
+                                    }
+                                    style={{ ...ui.input, width: "100%" }}
+                                    placeholder={
+                                      [
+                                        "기획 본부",
+                                        "디자인 본부",
+                                        "온라인 본부",
+                                        "영상제작 본부",
+                                      ][idx]
+                                    }
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div
+                          style={{ display: "flex", gap: 10, flexWrap: "wrap" }}
+                        >
+                          <button
+                            type="button"
+                            style={{ ...ui.btn, ...ui.btnGhost }}
+                            onClick={() => {
+                              mutate((next) => {
+                                if (!next.org) next.org = {};
+                                next.org.sectionLabel =
+                                  next.org.sectionLabel || "ABOUT US";
+                                next.org.showSectionLabel = false;
+
+                                if (!next.org.ceo)
+                                  next.org.ceo = { title: "대표이사" };
+
+                                if (
+                                  !Array.isArray(next.org.offices) ||
+                                  next.org.offices.length < 2
+                                ) {
+                                  next.org.offices = [
+                                    { title: "전략기획실" },
+                                    { title: "경영지원실" },
+                                  ];
+                                }
+
+                                if (
+                                  !Array.isArray(next.org.divisions) ||
+                                  next.org.divisions.length < 4
+                                ) {
+                                  next.org.divisions = [
+                                    {
+                                      title: "기획 본부",
+                                      teams: ["1 TEAM", "2 TEAM", "3 TEAM"],
+                                    },
+                                    {
+                                      title: "디자인 본부",
+                                      teams: ["1 TEAM", "2 TEAM"],
+                                    },
+                                    {
+                                      title: "온라인 본부",
+                                      teams: ["1 TEAM", "2 TEAM"],
+                                    },
+                                    { title: "영상제작 본부", teams: ["1 TEAM"] },
+                                  ];
+                                }
+                              });
+                              showToast("조직도 기본 골격 생성", "ok");
+                            }}
+                            disabled={busy}
+                          >
+                            org 기본 골격 생성
+                          </button>
+                        </div>
+                      </div>
+                    </AdminCard>
+
+                    <AdminCard
+                      ui={ui}
+                      title="Contact 텍스트"
+                      sub="ContactSection의 회사 정보와 문의 문구를 수정합니다."
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: isMobile
+                            ? "1fr"
+                            : "repeat(2, minmax(0, 1fr))",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>Contact 제목</div>
+                          <div style={ui.monoLine}>contact.title</div>
+                          <input
+                            value={data?.contact?.title ?? ""}
+                            onChange={(e) =>
+                              updateByPath("contact.title", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="CONTACT"
+                          />
+                        </div>
+
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>회사명</div>
+                          <div style={ui.monoLine}>contact.companyName</div>
+                          <input
+                            value={data?.contact?.companyName ?? ""}
+                            onChange={(e) =>
+                              updateByPath("contact.companyName", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="주식회사 캡스톤그룹"
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 6,
+                            gridColumn: isMobile ? "auto" : "1 / -1",
+                          }}
+                        >
+                          <div style={ui.fieldLabel}>설명 문구</div>
+                          <div style={ui.monoLine}>contact.desc</div>
+                          <textarea
+                            value={data?.contact?.desc ?? ""}
+                            onChange={(e) =>
+                              updateByPath("contact.desc", e.target.value)
+                            }
+                            style={ui.textarea}
+                            placeholder="여러분과 언제든 함께할 수 있도록..."
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 6,
+                            gridColumn: isMobile ? "auto" : "1 / -1",
+                          }}
+                        >
+                          <div style={ui.fieldLabel}>주소</div>
+                          <div style={ui.monoLine}>contact.address</div>
+                          <input
+                            value={data?.contact?.address ?? ""}
+                            onChange={(e) =>
+                              updateByPath("contact.address", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="서울특별시 서대문구 신촌로 25, 2층(창천동, 상록빌딩)"
+                          />
+                        </div>
+
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>전화번호</div>
+                          <div style={ui.monoLine}>contact.tel</div>
+                          <input
+                            value={data?.contact?.tel ?? ""}
+                            onChange={(e) =>
+                              updateByPath("contact.tel", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="02-6010-8500"
+                          />
+                        </div>
+
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>이메일</div>
+                          <div style={ui.monoLine}>contact.email</div>
+                          <input
+                            value={data?.contact?.email ?? ""}
+                            onChange={(e) =>
+                              updateByPath("contact.email", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="info@capstone-pco.com"
+                          />
+                        </div>
+
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>폼 제목</div>
+                          <div style={ui.monoLine}>contactForm.title</div>
+                          <input
+                            value={data?.contactForm?.title ?? ""}
+                            onChange={(e) =>
+                              updateByPath("contactForm.title", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="Send a Message"
+                          />
+                        </div>
+
+                        {[
+                          ["name", "성명"],
+                          ["org", "소속"],
+                          ["phone", "핸드폰번호"],
+                          ["email", "이메일주소"],
+                          ["inquiry", "문의사항"],
+                          ["submit", "전송"],
+                        ].map(([key, ph]) => (
+                          <div key={key} style={{ display: "grid", gap: 6 }}>
+                            <div style={ui.fieldLabel}>폼 라벨 - {key}</div>
+                            <div style={ui.monoLine}>
+                              {`contactForm.fields.${key}`}
+                            </div>
+                            <input
+                              value={data?.contactForm?.fields?.[key] ?? ""}
+                              onChange={(e) =>
+                                updateByPath(
+                                  `contactForm.fields.${key}`,
+                                  e.target.value
+                                )
+                              }
+                              style={ui.input}
+                              placeholder={ph}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </AdminCard>
+                  </>
                 ) : null}
 
-                {/* Cases 탭 */}
+                {tab === "fields" ? (
+                  <>
+                    <AdminCard
+                      ui={ui}
+                      title="Portfolio 섹션 텍스트"
+                      sub="FieldsSection에서 표시되는 PORTFOLIO 라벨과 설명 문구"
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: isMobile
+                            ? "1fr"
+                            : "repeat(2, minmax(0, 1fr))",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>상단 라벨</div>
+                          <div style={ui.monoLine}>fields.tagTitle</div>
+                          <input
+                            value={data?.fields?.tagTitle ?? ""}
+                            onChange={(e) =>
+                              updateByPath("fields.tagTitle", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="Portfolio"
+                          />
+                        </div>
+
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>상단 강조 라벨</div>
+                          <div style={ui.monoLine}>fields.displayTitle</div>
+                          <input
+                            value={data?.fields?.displayTitle ?? ""}
+                            onChange={(e) =>
+                              updateByPath("fields.displayTitle", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="PORTFOLIO"
+                          />
+                        </div>
+
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>하단 강조 라벨</div>
+                          <div style={ui.monoLine}>
+                            fields.displayBottomLabel
+                          </div>
+                          <input
+                            value={data?.fields?.displayBottomLabel ?? ""}
+                            onChange={(e) =>
+                              updateByPath(
+                                "fields.displayBottomLabel",
+                                e.target.value
+                              )
+                            }
+                            style={ui.input}
+                            placeholder="PORTFOLIO"
+                          />
+                        </div>
+
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>섹션 제목</div>
+                          <div style={ui.monoLine}>fields.title</div>
+                          <input
+                            value={data?.fields?.title ?? ""}
+                            onChange={(e) =>
+                              updateByPath("fields.title", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="주요 사업분야"
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 6,
+                            gridColumn: isMobile ? "auto" : "1 / -1",
+                          }}
+                        >
+                          <div style={ui.fieldLabel}>섹션 설명</div>
+                          <div style={ui.monoLine}>fields.subtitle</div>
+                          <textarea
+                            value={data?.fields?.subtitle ?? ""}
+                            onChange={(e) =>
+                              updateByPath("fields.subtitle", e.target.value)
+                            }
+                            style={ui.textarea}
+                            placeholder="정부, 공공기관, 학술단체 및 민간기업 등이 개최하는 국내/외 행사"
+                          />
+                        </div>
+
+                        <div
+                          style={{
+                            display: "grid",
+                            gap: 8,
+                            gridColumn: isMobile ? "auto" : "1 / -1",
+                          }}
+                        >
+                          <div style={ui.fieldLabel}>요약 라인</div>
+                          {Array.from({ length: 4 }).map((_, idx) => (
+                            <div key={idx} style={{ display: "grid", gap: 6 }}>
+                              <div style={ui.monoLine}>
+                                {`fields.summaryLines[${idx}]`}
+                              </div>
+                              <input
+                                value={data?.fields?.summaryLines?.[idx] ?? ""}
+                                onChange={(e) =>
+                                  updateByPath(
+                                    `fields.summaryLines[${idx}]`,
+                                    e.target.value
+                                  )
+                                }
+                                style={ui.input}
+                                placeholder={`요약 문구 ${idx + 1}`}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </AdminCard>
+
+                    <AdminCard
+                      ui={ui}
+                      title="사업분야 롤링 이미지"
+                      sub="fields.rollingPhotos[].src / label 수정 가능"
+                    >
+                      <div style={ui.grid}>
+                        {rollingPhotos.map((p, idx) => {
+                          const srcPath = `fields.rollingPhotos[${idx}].src`;
+                          const labelPath = `fields.rollingPhotos[${idx}].label`;
+                          const bytes = p.src ? estimateDataUrlBytes(p.src) : 0;
+
+                          return (
+                            <div key={idx} style={ui.gridItem}>
+                              <div style={ui.gridHeader}>
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={ui.gridTitle}>
+                                    {p.label || `Rolling #${idx + 1}`}
+                                  </div>
+
+                                  <div style={ui.monoLine}>{srcPath}</div>
+
+                                  {bytes ? (
+                                    <div style={ui.sizeHint}>
+                                      Stored: {humanBytes(bytes)}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+
+                              <AdminPreview ui={ui} src={p.src} />
+
+                              <div style={{ marginTop: 10 }}>
+                                <div style={ui.fieldLabel}>제목(label)</div>
+
+                                <input
+                                  value={p.label || ""}
+                                  onChange={(e) =>
+                                    updateByPath(labelPath, e.target.value)
+                                  }
+                                  style={ui.input}
+                                  placeholder="예: 국제회의 / Exhibition / Conference"
+                                />
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: 10,
+                                  flexWrap: "wrap",
+                                  marginTop: 10,
+                                }}
+                              >
+                                <label
+                                  style={{
+                                    ...ui.btn,
+                                    ...ui.btnPrimary,
+                                    cursor: busy ? "not-allowed" : "pointer",
+                                  }}
+                                >
+                                  업로드
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: "none" }}
+                                    disabled={busy}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0] || null;
+                                      e.target.value = "";
+                                      uploadToPath(srcPath, f);
+                                    }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  style={{ ...ui.btn, ...ui.btnDanger }}
+                                  onClick={() => clearPath(srcPath)}
+                                  disabled={busy || !p.src}
+                                >
+                                  삭제
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AdminCard>
+                  </>
+                ) : null}
+
                 {tab === "cases" ? (
                   <>
+                    <AdminCard
+                      ui={ui}
+                      title="Cases 공통 라벨"
+                      sub="섹션 공통 CASES 라벨과 각 블록 eyebrow를 관리합니다."
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: isMobile
+                            ? "1fr"
+                            : "repeat(2, minmax(0, 1fr))",
+                          gap: 12,
+                        }}
+                      >
+                        <div style={{ display: "grid", gap: 6 }}>
+                          <div style={ui.fieldLabel}>섹션 공통 라벨</div>
+                          <div style={ui.monoLine}>cases.sectionLabel</div>
+                          <input
+                            value={data?.cases?.sectionLabel ?? ""}
+                            onChange={(e) =>
+                              updateByPath("cases.sectionLabel", e.target.value)
+                            }
+                            style={ui.input}
+                            placeholder="CASES"
+                          />
+                        </div>
+                      </div>
+                    </AdminCard>
+
                     <div style={{ marginTop: 16 }}>
                       <div style={ui.sectionTitle}>Cases 이미지 + 문구</div>
                       <div style={ui.sectionHint}>
@@ -1110,6 +1523,77 @@ export default function AdminConsolePage({ data, setData, saveError }) {
                                 >
                                   블록 삭제
                                 </button>
+                              </div>
+                            </div>
+
+                            <div
+                              style={{
+                                display: "grid",
+                                gridTemplateColumns: isMobile
+                                  ? "1fr"
+                                  : "1fr 1fr",
+                                gap: 12,
+                                marginBottom: 14,
+                              }}
+                            >
+                              <div style={{ display: "grid", gap: 6 }}>
+                                <div style={ui.fieldLabel}>블록 라벨</div>
+                                <div
+                                  style={ui.monoLine}
+                                >{`cases.blocks[${bIdx}].eyebrow`}</div>
+                                <input
+                                  value={block?.eyebrow ?? ""}
+                                  onChange={(e) =>
+                                    updateByPath(
+                                      `cases.blocks[${bIdx}].eyebrow`,
+                                      e.target.value
+                                    )
+                                  }
+                                  style={ui.input}
+                                  placeholder="CASES"
+                                />
+                              </div>
+
+                              <div style={{ display: "grid", gap: 6 }}>
+                                <div style={ui.fieldLabel}>블록 제목</div>
+                                <div
+                                  style={ui.monoLine}
+                                >{`cases.blocks[${bIdx}].title`}</div>
+                                <input
+                                  value={block?.title ?? ""}
+                                  onChange={(e) =>
+                                    updateByPath(
+                                      `cases.blocks[${bIdx}].title`,
+                                      e.target.value
+                                    )
+                                  }
+                                  style={ui.input}
+                                  placeholder="대형 행사 경험과 노하우 보유"
+                                />
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "grid",
+                                  gap: 6,
+                                  gridColumn: isMobile ? "auto" : "1 / -1",
+                                }}
+                              >
+                                <div style={ui.fieldLabel}>블록 서브타이틀</div>
+                                <div
+                                  style={ui.monoLine}
+                                >{`cases.blocks[${bIdx}].subtitle`}</div>
+                                <input
+                                  value={block?.subtitle ?? ""}
+                                  onChange={(e) =>
+                                    updateByPath(
+                                      `cases.blocks[${bIdx}].subtitle`,
+                                      e.target.value
+                                    )
+                                  }
+                                  style={ui.input}
+                                  placeholder="VIP, 국무총리, 장관급 행사 등"
+                                />
                               </div>
                             </div>
 
@@ -1320,8 +1804,8 @@ export default function AdminConsolePage({ data, setData, saveError }) {
 
                 <div style={ui.footer}>
                   <div style={ui.footerHint}>
-                    케이스 카드 문구(타이틀/라인)까지 어드민에서 수정
-                    가능합니다.
+                    헤더 / Org / Portfolio / Cases / Contact 문구까지 어드민에서
+                    수정 가능합니다.
                   </div>
                   <button
                     type="button"

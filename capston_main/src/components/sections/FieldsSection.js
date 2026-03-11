@@ -1,4 +1,3 @@
-// src/components/sections/FieldsSection.js
 import React, {
   useMemo,
   useRef,
@@ -6,6 +5,7 @@ import React, {
   useState,
   useCallback,
 } from "react";
+import SectionLabel from "../SectionLabel";
 
 export default function FieldsSection({
   data,
@@ -26,49 +26,44 @@ export default function FieldsSection({
 
   const bgImage = data?.sectionBg?.fields || "";
 
-  // 무한 루프용 복제
   const times = 3;
   const photos = useMemo(() => {
     if (!photosBase.length) return [];
     return Array.from({ length: times }, () => photosBase).flat();
   }, [photosBase]);
 
-  // ✅ PPT 기준 텍스트 반영
-  const titleText = "주요 사업분야";
+  const eyebrowText = fields?.tagTitle || "Portfolio";
+  const titleText = fields?.title || "주요 사업분야";
   const subtitleText =
+    fields?.subtitle ||
     "정부, 공공기관, 학술단체 및 민간기업 등이 개최하는 국내/외 행사";
-  const summaryLines = [
-    "VIP, 국무총리, 장관급 등 격식 행사",
-    "국제회의, 컨퍼런스, 포럼, 심포지엄, 학술대회, 세미나 등 학술관련 행사",
-    "기념식, 시상식, 비전선포식, 프로모션 등 부대 행사",
-    "온라인 및 하이브리드 행사",
-  ];
+  const summaryLines =
+    Array.isArray(fields?.summaryLines) && fields.summaryLines.length
+      ? fields.summaryLines
+      : [
+          "VIP, 국무총리, 장관급 등 격식 행사",
+          "국제회의, 컨퍼런스, 포럼, 심포지엄, 학술대회, 세미나 등 학술관련 행사",
+          "기념식, 시상식, 비전선포식, 프로모션 등 부대 행사",
+          "온라인 및 하이브리드 행사",
+        ];
 
-  // 다크 톤
   const bg = "#05070C";
   const fg = "#fff";
-  const sub = "rgba(255,255,255,0.82)";
-  const subSoft = "rgba(255,255,255,0.72)";
+  const sub = "rgba(255,255,255,0.86)";
+  const subSoft = "rgba(255,255,255,0.76)";
   const border = "rgba(255,255,255,0.14)";
   const borderHover = "rgba(255,255,255,0.22)";
-  const gold = styles?.brand?.base || "#C7A66A";
 
-  // 롤링
   const scrollerRef = useRef(null);
   const rafRef = useRef(0);
   const pausedRef = useRef(false);
 
-  // 속도
   const speedPxPerSec = isMobile ? 40 : 58;
-
-  // 1세트 폭
   const baseWidthRef = useRef(0);
-
-  // 이미지 로딩 타이밍 보정
   const [imgLoadedTick, setImgLoadedTick] = useState(0);
 
-  const cardW = isMobile ? 240 : 290;
-  const imgH = isMobile ? 150 : 176;
+  const cardW = isMobile ? 248 : 304;
+  const imgH = isMobile ? 156 : 184;
 
   const measureBaseWidth = useCallback(() => {
     const el = scrollerRef.current;
@@ -93,7 +88,6 @@ export default function FieldsSection({
     measureBaseWidth();
   }, [imgLoadedTick, measureBaseWidth, photos.length]);
 
-  // 무한 자동 스크롤
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el || !photos.length || !photosBase.length) return;
@@ -122,7 +116,6 @@ export default function FieldsSection({
     return () => cancelAnimationFrame(rafRef.current);
   }, [photos.length, photosBase.length, speedPxPerSec]);
 
-  // 잡으면 멈춤
   useEffect(() => {
     const el = scrollerRef.current;
     if (!el) return;
@@ -165,7 +158,6 @@ export default function FieldsSection({
     };
   }, []);
 
-  // 접근성: reduce motion
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -294,14 +286,16 @@ export default function FieldsSection({
       <div className="csbVignette" />
 
       <div style={{ ...styles.container, position: "relative", zIndex: 2 }}>
-        <div style={{ maxWidth: 980, marginTop: 6 }}>
+        <div style={{ maxWidth: 1020, marginTop: 6 }}>
+          <SectionLabel text={eyebrowText} styles={styles} />
+
           <h2
             style={{
-              margin: 0,
+              margin: "14px 0 0",
               fontSize: isMobile
                 ? "clamp(28px, 8vw, 36px)"
-                : "clamp(34px, 3.6vw, 44px)",
-              fontWeight: 500,
+                : "clamp(34px, 3.6vw, 46px)",
+              fontWeight: 700,
               letterSpacing: "-0.035em",
               lineHeight: 1.14,
               fontFamily:
@@ -318,10 +312,10 @@ export default function FieldsSection({
           <div
             style={{
               marginTop: 10,
-              fontSize: isMobile ? "13.5px" : "15px",
+              fontSize: isMobile ? "13.5px" : "15.5px",
               color: subSoft,
-              maxWidth: 920,
-              lineHeight: 1.7,
+              maxWidth: 940,
+              lineHeight: 1.72,
               fontFamily:
                 styles?.fonts?.body ||
                 styles?.fonts?.display ||
@@ -338,7 +332,7 @@ export default function FieldsSection({
               paddingLeft: isMobile ? 18 : 20,
               color: sub,
               fontSize: isMobile ? "13.5px" : "15px",
-              lineHeight: 1.75,
+              lineHeight: 1.78,
               fontFamily:
                 styles?.fonts?.body ||
                 styles?.fonts?.display ||
@@ -347,7 +341,7 @@ export default function FieldsSection({
             }}
           >
             {summaryLines.map((line, idx) => (
-              <li key={idx} style={{ marginTop: idx === 0 ? 0 : 4 }}>
+              <li key={idx} style={{ marginTop: idx === 0 ? 0 : 5 }}>
                 {line}
               </li>
             ))}
@@ -357,14 +351,13 @@ export default function FieldsSection({
             style={{
               width: "100%",
               height: 1,
-              marginTop: 18,
-              background:
-                "linear-gradient(90deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.03) 100%)",
+              marginTop: 20,
+              background: `linear-gradient(90deg, rgba(199,166,106,0.40) 0%, rgba(255,255,255,0.03) 100%)`,
             }}
           />
         </div>
 
-        <div style={{ marginTop: isMobile ? 18 : 22, position: "relative" }}>
+        <div style={{ marginTop: isMobile ? 20 : 24, position: "relative" }}>
           <div className="csbMask">
             <div
               ref={scrollerRef}
@@ -378,7 +371,7 @@ export default function FieldsSection({
               }}
             >
               {photos.length === 0 ? (
-                <div style={{ height: imgH + 48 }} />
+                <div style={{ height: imgH + 52 }} />
               ) : (
                 photos.map((ph, idx) => (
                   <div
@@ -388,7 +381,7 @@ export default function FieldsSection({
                     <div
                       className="csbCard"
                       style={{
-                        borderRadius: 18,
+                        borderRadius: 20,
                         overflow: "hidden",
                         background: "rgba(255,255,255,0.04)",
                         border: `1px solid ${border}`,
@@ -444,10 +437,10 @@ export default function FieldsSection({
                       <div
                         style={{
                           padding: "12px 12px",
-                          background: "rgba(0,0,0,0.58)",
+                          background: "rgba(0,0,0,0.60)",
                           borderTop: `1px solid ${border}`,
                           textAlign: "center",
-                          fontSize: isMobile ? 12.8 : 13.6,
+                          fontSize: isMobile ? 12.8 : 13.8,
                           fontWeight: 500,
                           letterSpacing: "-0.02em",
                           color: fg,

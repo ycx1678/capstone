@@ -6,21 +6,19 @@ export function getSiteStyles({ data, isMobile }) {
   // Type scale
   // ---------------------------
   const type = {
-    h1: isMobile ? "clamp(32px, 8.4vw, 46px)" : "clamp(42px, 5.2vw, 68px)",
-    h2: isMobile ? "clamp(24px, 6vw, 32px)" : "clamp(30px, 3.2vw, 42px)",
-    h3: isMobile ? "clamp(18px, 4.5vw, 22px)" : "clamp(20px, 2vw, 24px)",
+    h1: isMobile ? "clamp(34px, 8.6vw, 48px)" : "clamp(46px, 5.3vw, 72px)",
+    h2: isMobile ? "clamp(25px, 6.2vw, 34px)" : "clamp(32px, 3.25vw, 46px)",
+    h3: isMobile ? "clamp(18px, 4.6vw, 23px)" : "clamp(21px, 2.05vw, 26px)",
     bodyLg: isMobile
-      ? "clamp(15px, 3.6vw, 17px)"
-      : "clamp(16px, 1.35vw, 19px)",
+      ? "clamp(15px, 3.7vw, 17px)"
+      : "clamp(17px, 1.36vw, 20px)",
     body: isMobile
-      ? "clamp(14px, 3.3vw, 16px)"
-      : "clamp(15px, 1.15vw, 17px)",
-    small: isMobile ? "clamp(12px, 2.8vw, 13px)" : "clamp(12px, 1vw, 14px)",
+      ? "clamp(14px, 3.35vw, 16px)"
+      : "clamp(15.5px, 1.18vw, 17.5px)",
+    small: isMobile ? "clamp(12px, 2.9vw, 13.5px)" : "clamp(12.5px, 1.02vw, 14.5px)",
     xs: isMobile ? "11px" : "12px",
     menu: isMobile ? "12px" : "13px",
 
-    // ✅ 요구사항 반영:
-    // 바디 = GmarketSans Medium / Bold 중심
     weight: {
       light: 500,
       reg: 500,
@@ -31,17 +29,17 @@ export function getSiteStyles({ data, isMobile }) {
     },
 
     line: {
-      tight: 1.08,
-      heading: 1.18,
-      normal: 1.65,
-      relaxed: 1.78,
+      tight: 1.1,
+      heading: 1.22,
+      normal: isMobile ? 1.68 : 1.7,
+      relaxed: isMobile ? 1.82 : 1.84,
     },
 
     letter: {
       hero: "-0.04em",
       heading: "-0.03em",
-      body: "-0.01em",
-      menu: "0.02em",
+      body: isMobile ? "-0.008em" : "-0.01em",
+      menu: "0.035em",
       wide: "0.08em",
     },
   };
@@ -62,7 +60,8 @@ export function getSiteStyles({ data, isMobile }) {
   const padXMobile = layout.sectionPadMobileX ?? 16;
   const padYMobile = layout.sectionPadMobileY ?? 56;
 
-  const containerMax = layout.containerMax ?? 1280;
+  // 요청사항 대응: 전체 박스/영역이 조금 더 크게 보이도록 기본 최대폭 소폭 상향
+  const containerMax = layout.containerMax ?? 1320;
 
   const container = {
     width: "100%",
@@ -89,9 +88,6 @@ export function getSiteStyles({ data, isMobile }) {
   // ---------------------------
   // Fonts
   // ---------------------------
-  // ✅ 요구사항 반영
-  // - 페이지 바디: GmarketSans Medium / Bold
-  // - 상단 메뉴: 고딕 계열
   const fonts = {
     nav: `"KoPubWorldDotum", "Pretendard", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`,
     body: `"GmarketSans", "Noto Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif`,
@@ -115,10 +111,10 @@ export function getSiteStyles({ data, isMobile }) {
     border: { w: 1 },
 
     shadow: {
-      sm: "0 6px 18px rgba(0,0,0,0.18)",
-      md: "0 10px 30px rgba(0,0,0,0.24)",
-      lg: "0 20px 60px rgba(0,0,0,0.30)",
-      xl: "0 28px 100px rgba(0,0,0,0.34)",
+      sm: "0 8px 22px rgba(0,0,0,0.18)",
+      md: "0 12px 34px rgba(0,0,0,0.24)",
+      lg: "0 22px 64px rgba(0,0,0,0.30)",
+      xl: "0 30px 104px rgba(0,0,0,0.34)",
     },
 
     motion: {
@@ -142,37 +138,37 @@ export function getSiteStyles({ data, isMobile }) {
     dark: {
       bg: "#07090d",
       bgAlt: "#0d1117",
-      bgElev: "rgba(255,255,255,0.05)",
-      fg: "rgba(255,255,255,0.94)",
-      sub: "rgba(255,255,255,0.72)",
-      faint: "rgba(255,255,255,0.55)",
+      bgElev: "rgba(255,255,255,0.06)",
+      fg: "rgba(255,255,255,0.96)",
+      sub: "rgba(255,255,255,0.82)",
+      faint: "rgba(255,255,255,0.68)",
 
-      border: "rgba(255,255,255,0.10)",
-      borderStrong: "rgba(255,255,255,0.16)",
+      border: "rgba(255,255,255,0.11)",
+      borderStrong: "rgba(255,255,255,0.18)",
 
       pillBg: "rgba(255,255,255,0.08)",
-      surface: "rgba(255,255,255,0.05)",
-      surfaceHover: "rgba(255,255,255,0.085)",
-      softBg: "rgba(255,255,255,0.035)",
+      surface: "rgba(255,255,255,0.06)",
+      surfaceHover: "rgba(255,255,255,0.095)",
+      softBg: "rgba(255,255,255,0.04)",
 
-      headerBg: "rgba(7,9,13,0.68)",
-      headerBorder: "rgba(255,255,255,0.08)",
+      headerBg: "rgba(7,9,13,0.72)",
+      headerBorder: "rgba(255,255,255,0.09)",
 
       btnBg: "#ffffff",
       btnFg: "#111111",
-      outlineBorder: "rgba(255,255,255,0.22)",
+      outlineBorder: "rgba(255,255,255,0.24)",
 
       sectionOverlay:
-        "linear-gradient(180deg, rgba(255,255,255,0.015), rgba(255,255,255,0))",
+        "linear-gradient(180deg, rgba(255,255,255,0.018), rgba(255,255,255,0))",
     },
 
     light: {
       bg: "#ffffff",
       bgAlt: "#f6f7fa",
       bgElev: "rgba(0,0,0,0.035)",
-      fg: "rgba(0,0,0,0.88)",
-      sub: "rgba(0,0,0,0.62)",
-      faint: "rgba(0,0,0,0.48)",
+      fg: "rgba(0,0,0,0.9)",
+      sub: "rgba(0,0,0,0.68)",
+      faint: "rgba(0,0,0,0.52)",
 
       border: "rgba(0,0,0,0.10)",
       borderStrong: "rgba(0,0,0,0.16)",
@@ -182,7 +178,7 @@ export function getSiteStyles({ data, isMobile }) {
       surfaceHover: "rgba(0,0,0,0.05)",
       softBg: "rgba(0,0,0,0.02)",
 
-      headerBg: "rgba(255,255,255,0.78)",
+      headerBg: "rgba(255,255,255,0.82)",
       headerBorder: "rgba(0,0,0,0.06)",
 
       btnBg: "#111111",
@@ -230,13 +226,13 @@ export function getSiteStyles({ data, isMobile }) {
   const brand = {
     base: brandBase,
     rgb: `${r}, ${g}, ${b}`,
-    soft: `rgba(${r},${g},${b},0.10)`,
-    softStrong: `rgba(${r},${g},${b},0.18)`,
-    surface: `rgba(${r},${g},${b},0.08)`,
-    border: `rgba(${r},${g},${b},0.34)`,
-    borderStrong: `rgba(${r},${g},${b},0.5)`,
-    glow: `0 0 0 1px rgba(${r},${g},${b},0.14), 0 10px 40px rgba(${r},${g},${b},0.16)`,
-    hover: `rgba(${r},${g},${b},0.88)`,
+    soft: `rgba(${r},${g},${b},0.11)`,
+    softStrong: `rgba(${r},${g},${b},0.20)`,
+    surface: `rgba(${r},${g},${b},0.09)`,
+    border: `rgba(${r},${g},${b},0.38)`,
+    borderStrong: `rgba(${r},${g},${b},0.56)`,
+    glow: `0 0 0 1px rgba(${r},${g},${b},0.16), 0 12px 42px rgba(${r},${g},${b},0.19)`,
+    hover: `rgba(${r},${g},${b},0.92)`,
     textOn: "#ffffff",
 
     secondary: {
@@ -279,6 +275,7 @@ export function getSiteStyles({ data, isMobile }) {
     fontWeight: opts.fontWeight ?? type.weight.med,
     lineHeight: opts.lineHeight ?? type.line.normal,
     letterSpacing: opts.letterSpacing ?? type.letter.body,
+    wordBreak: opts.wordBreak ?? "keep-all",
   });
 
   const subText = (themeName = "dark", opts = {}) => ({
@@ -287,6 +284,7 @@ export function getSiteStyles({ data, isMobile }) {
     fontWeight: opts.fontWeight ?? type.weight.med,
     lineHeight: opts.lineHeight ?? type.line.relaxed,
     letterSpacing: opts.letterSpacing ?? type.letter.body,
+    wordBreak: opts.wordBreak ?? "keep-all",
   });
 
   const titleText = (themeName = "dark", level = "h2", opts = {}) => {
@@ -299,13 +297,14 @@ export function getSiteStyles({ data, isMobile }) {
       fontSize: opts.fontSize ?? size,
       fontWeight:
         opts.fontWeight ??
-        (level === "h1" ? type.weight.bold : type.weight.med),
+        (level === "h1" ? type.weight.bold : type.weight.semibold),
       lineHeight:
         opts.lineHeight ??
         (level === "h1" ? type.line.tight : type.line.heading),
       letterSpacing:
         opts.letterSpacing ??
         (level === "h1" ? type.letter.hero : type.letter.heading),
+      wordBreak: opts.wordBreak ?? "keep-all",
     };
   };
 
@@ -337,14 +336,18 @@ export function getSiteStyles({ data, isMobile }) {
 
   const navLink = (themeName = "dark", opts = {}) => {
     const t = pick(themeName);
+    const active = !!opts.active;
+    const useBrand = !!opts.useBrand;
 
     return {
-      color: opts.color ?? t.fg,
+      color: active || useBrand ? brand.base : opts.color ?? t.fg,
       textDecoration: "none",
       fontSize: opts.fontSize ?? type.menu,
-      fontWeight: opts.fontWeight ?? type.weight.med,
+      fontWeight:
+        opts.fontWeight ??
+        (active || useBrand ? type.weight.bold : type.weight.med),
       letterSpacing: opts.letterSpacing ?? type.letter.menu,
-      opacity: opts.opacity ?? 0.86,
+      opacity: opts.opacity ?? (active ? 1 : 0.9),
       whiteSpace: "nowrap",
       textTransform: opts.textTransform ?? "uppercase",
       fontFamily: opts.fontFamily ?? fonts.nav,
@@ -417,7 +420,7 @@ export function getSiteStyles({ data, isMobile }) {
     inset: 0,
     background:
       opts.background ??
-      `linear-gradient(180deg, rgba(7,9,13,0.72) 0%, rgba(7,9,13,0.62) 38%, rgba(7,9,13,0.86) 100%)`,
+      `linear-gradient(180deg, rgba(7,9,13,0.68) 0%, rgba(7,9,13,0.58) 38%, rgba(7,9,13,0.84) 100%)`,
     pointerEvents: "none",
     zIndex: opts.zIndex ?? 1,
   });
@@ -425,7 +428,7 @@ export function getSiteStyles({ data, isMobile }) {
   const goldLine = {
     height: 1,
     width: "100%",
-    background: `linear-gradient(90deg, rgba(${brand.rgb},0) 0%, rgba(${brand.rgb},0.65) 50%, rgba(${brand.rgb},0) 100%)`,
+    background: `linear-gradient(90deg, rgba(${brand.rgb},0) 0%, rgba(${brand.rgb},0.78) 50%, rgba(${brand.rgb},0) 100%)`,
   };
 
   // ---------------------------
@@ -435,7 +438,7 @@ export function getSiteStyles({ data, isMobile }) {
     card: (themeName = "dark", opts = {}) => {
       const t = pick(themeName);
       const {
-        padding = isMobile ? "16px" : "18px",
+        padding = isMobile ? "18px" : "22px",
         radius = tok.radius.xl,
         hover = false,
         variant = "default",
@@ -453,7 +456,7 @@ export function getSiteStyles({ data, isMobile }) {
 
       const resolvedBg =
         variant === "brand"
-          ? `linear-gradient(180deg, rgba(${brand.rgb},0.10) 0%, rgba(255,255,255,0.04) 100%)`
+          ? `linear-gradient(180deg, rgba(${brand.rgb},0.12) 0%, rgba(255,255,255,0.05) 100%)`
           : t.surface;
 
       return {
@@ -468,12 +471,13 @@ export function getSiteStyles({ data, isMobile }) {
         fontFamily: fonts.body,
         fontWeight: type.weight.med,
         letterSpacing: type.letter.body,
+        boxSizing: "border-box",
         transition: `transform ${tok.motion.base} ${tok.motion.ease}, box-shadow ${tok.motion.base} ${tok.motion.ease}, background ${tok.motion.base} ${tok.motion.ease}, border-color ${tok.motion.base} ${tok.motion.ease}`,
         ...(hover
           ? {
               background:
                 variant === "brand"
-                  ? `linear-gradient(180deg, rgba(${brand.rgb},0.14) 0%, rgba(255,255,255,0.05) 100%)`
+                  ? `linear-gradient(180deg, rgba(${brand.rgb},0.15) 0%, rgba(255,255,255,0.06) 100%)`
                   : t.surfaceHover ?? t.surface,
               borderColor:
                 useBrandBorder || variant === "brand"
@@ -489,7 +493,7 @@ export function getSiteStyles({ data, isMobile }) {
     panel: (themeName = "dark", opts = {}) => {
       const t = pick(themeName);
       const {
-        padding = isMobile ? "14px 16px" : "16px 22px",
+        padding = isMobile ? "16px 18px" : "18px 24px",
         radius = tok.radius.md,
         shadow = "md",
         glass = true,
@@ -503,8 +507,8 @@ export function getSiteStyles({ data, isMobile }) {
 
       const defaultGlassBg =
         themeName === "dark"
-          ? "rgba(255,255,255,0.06)"
-          : "rgba(255,255,255,0.72)";
+          ? "rgba(255,255,255,0.07)"
+          : "rgba(255,255,255,0.74)";
 
       return {
         padding,
@@ -512,7 +516,7 @@ export function getSiteStyles({ data, isMobile }) {
         background:
           bg ??
           (useBrand
-            ? `rgba(${brand.rgb},0.08)`
+            ? `rgba(${brand.rgb},0.09)`
             : glass
             ? defaultGlassBg
             : t.surface),
@@ -523,6 +527,7 @@ export function getSiteStyles({ data, isMobile }) {
         fontFamily: fonts.body,
         fontWeight: type.weight.med,
         letterSpacing: type.letter.body,
+        boxSizing: "border-box",
         ...(glass
           ? {
               backdropFilter: `blur(${tok.blur.sm})`,
@@ -541,7 +546,7 @@ export function getSiteStyles({ data, isMobile }) {
           ? { padding: "10px 14px", fontSize: type.small }
           : size === "lg"
           ? {
-              padding: isMobile ? "13px 18px" : "15px 22px",
+              padding: isMobile ? "13px 18px" : "15px 24px",
               fontSize: type.body,
             }
           : { padding: "12px 18px", fontSize: type.small };
@@ -635,7 +640,7 @@ export function getSiteStyles({ data, isMobile }) {
       gap: 12,
       alignItems: "start",
       ...ui.card(themeName, {
-        padding: "16px",
+        padding: isMobile ? "16px" : "18px",
         radius: tok.radius.md,
         flat: true,
         ...opts,
@@ -647,8 +652,8 @@ export function getSiteStyles({ data, isMobile }) {
 
       return {
         width: "100%",
-        minHeight: opts.minHeight,
-        padding: opts.padding ?? "14px 16px",
+        minHeight: opts.minHeight ?? (isMobile ? 48 : 52),
+        padding: opts.padding ?? (isMobile ? "13px 14px" : "15px 16px"),
         borderRadius: opts.radius ?? 14,
         border: `${tok.border.w}px solid ${
           opts.useBrand ? brand.border : t.border
@@ -658,6 +663,7 @@ export function getSiteStyles({ data, isMobile }) {
         fontFamily: fonts.body,
         fontSize: opts.fontSize ?? type.body,
         fontWeight: type.weight.med,
+        lineHeight: type.line.normal,
         letterSpacing: type.letter.body,
         outline: "none",
         boxSizing: "border-box",
@@ -669,8 +675,8 @@ export function getSiteStyles({ data, isMobile }) {
 
       return {
         width: "100%",
-        minHeight: opts.minHeight ?? 140,
-        padding: opts.padding ?? "14px 16px",
+        minHeight: opts.minHeight ?? 152,
+        padding: opts.padding ?? (isMobile ? "13px 14px" : "15px 16px"),
         borderRadius: opts.radius ?? 14,
         border: `${tok.border.w}px solid ${
           opts.useBrand ? brand.border : t.border
@@ -680,6 +686,7 @@ export function getSiteStyles({ data, isMobile }) {
         fontFamily: fonts.body,
         fontSize: opts.fontSize ?? type.body,
         fontWeight: type.weight.med,
+        lineHeight: type.line.normal,
         letterSpacing: type.letter.body,
         outline: "none",
         boxSizing: "border-box",

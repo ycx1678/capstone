@@ -1,5 +1,5 @@
-// src/components/sections/ContactSection.js
 import React, { useState } from "react";
+import SectionLabel from "../SectionLabel";
 
 export default function ContactSection({
   data,
@@ -20,11 +20,16 @@ export default function ContactSection({
   });
 
   const address =
-    c.address || "서울시 서대문구 신촌로25, 2층(창천동, 상록빌딩)";
+    c.address || "서울시 서대문구 신촌로25 (창천동,상록빌딩)";
 
   const fg = t.fg;
   const subFg = t.sub;
   const border = t.border;
+  const gold = styles?.brand?.base || "#C7A66A";
+  const goldBorder = styles?.brand?.border || "rgba(199,166,106,0.34)";
+  const goldSoft = styles?.brand?.soft || "rgba(199,166,106,0.10)";
+  const goldSoftStrong =
+    styles?.brand?.softStrong || "rgba(199,166,106,0.18)";
 
   const bodyFont =
     styles?.fonts?.body || styles?.fonts?.display || "GmarketSans, sans-serif";
@@ -49,32 +54,32 @@ export default function ContactSection({
   const wrapCard = {
     ...styles.ui.card(theme, {
       padding: 0,
-      radius: 24,
+      radius: 26,
       variant: "premium",
     }),
     overflow: "hidden",
-    maxWidth: 1180,
+    maxWidth: 1200,
     margin: "0 auto",
     background:
       theme === "dark" ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.92)",
     border: `1px solid ${border}`,
   };
 
-  const cardPad = isMobile ? 18 : 28;
+  const cardPad = isMobile ? 20 : 32;
 
   const labelStyle = {
-    fontSize: isMobile ? "12px" : "13px",
+    fontSize: isMobile ? "12.5px" : "13.5px",
     fontWeight: 500,
-    marginBottom: 7,
+    marginBottom: 8,
     fontFamily: bodyFont,
     color: fg,
-    opacity: 0.86,
+    opacity: 0.88,
     letterSpacing: "-0.01em",
   };
 
   const valueStyle = {
-    fontSize: isMobile ? "14px" : "15px",
-    lineHeight: 1.72,
+    fontSize: isMobile ? "15px" : "16px",
+    lineHeight: 1.76,
     fontFamily: bodyFont,
     color: fg,
     whiteSpace: "pre-line",
@@ -83,10 +88,21 @@ export default function ContactSection({
     letterSpacing: "-0.015em",
   };
 
+  const addressValueStyle = {
+    ...valueStyle,
+    fontSize: isMobile ? "15.5px" : "17px",
+    color: gold,
+    lineHeight: 1.8,
+  };
+
   const divider = {
     height: 1,
     background:
       theme === "dark" ? "rgba(255,255,255,0.10)" : "rgba(11,18,32,0.08)",
+  };
+
+  const infoBlock = {
+    padding: isMobile ? "14px 0" : "16px 0",
   };
 
   const inputStyle = styles?.ui?.input
@@ -96,7 +112,7 @@ export default function ContactSection({
           background:
             theme === "dark" ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.02)",
         }),
-        minHeight: isMobile ? 48 : 52,
+        minHeight: isMobile ? 50 : 54,
       }
     : {};
 
@@ -104,7 +120,7 @@ export default function ContactSection({
     ? {
         ...styles.ui.textarea(theme, {
           useBrand: true,
-          minHeight: isMobile ? 96 : 112,
+          minHeight: isMobile ? 110 : 126,
           resize: "vertical",
           background:
             theme === "dark" ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.02)",
@@ -119,10 +135,10 @@ export default function ContactSection({
           radius: 14,
         }),
         width: isMobile ? "100%" : "auto",
-        minWidth: isMobile ? "100%" : 170,
+        minWidth: isMobile ? "100%" : 180,
         justifyContent: "center",
         fontFamily: bodyFont,
-        fontWeight: 600,
+        fontWeight: 700,
       }
     : {};
 
@@ -161,34 +177,15 @@ export default function ContactSection({
       />
 
       <div style={{ ...styles.container, position: "relative", zIndex: 2 }}>
-        <div style={{ marginBottom: isMobile ? 20 : 32 }}>
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              color: styles.brand.base,
-              fontSize: styles.type.xs ?? "12px",
-              fontWeight: 600,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              fontFamily: styles.fonts.nav,
-            }}
-          >
-            <span
-              style={{
-                width: 34,
-                height: 1,
-                background: `linear-gradient(90deg, rgba(199,166,106,0.2), ${styles.brand.base})`,
-              }}
-            />
-            <span>Contact</span>
-          </div>
+        <div style={{ marginBottom: isMobile ? 22 : 34 }}>
+          <SectionLabel text="Contact" styles={styles} />
 
           <div
             style={{
-              fontSize: styles.H2,
-              fontWeight: 500,
+              fontSize: isMobile
+                ? "clamp(28px, 6.6vw, 34px)"
+                : "clamp(34px, 3vw, 46px)",
+              fontWeight: 700,
               marginTop: 14,
               color: fg,
               fontFamily: displayFont,
@@ -202,9 +199,11 @@ export default function ContactSection({
           <div
             style={{
               marginTop: 12,
-              maxWidth: 760,
-              fontSize: styles.P,
-              lineHeight: 1.75,
+              maxWidth: 820,
+              fontSize: isMobile
+                ? "clamp(14px, 3.5vw, 16px)"
+                : "clamp(15.5px, 1.18vw, 17.5px)",
+              lineHeight: 1.78,
               color: subFg,
               whiteSpace: "pre-line",
               fontFamily: bodyFont,
@@ -221,11 +220,10 @@ export default function ContactSection({
           <div
             style={{
               display: "grid",
-              gridTemplateColumns: isMobile ? "1fr" : "0.92fr 1.08fr",
-              minHeight: isMobile ? "auto" : 470,
+              gridTemplateColumns: isMobile ? "1fr" : "0.94fr 1.06fr",
+              minHeight: isMobile ? "auto" : 520,
             }}
           >
-            {/* LEFT */}
             <div
               style={{
                 padding: cardPad,
@@ -237,35 +235,64 @@ export default function ContactSection({
                   : "none",
                 background:
                   theme === "dark"
-                    ? "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.02))"
+                    ? "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.025))"
                     : "rgba(255,255,255,0.82)",
                 boxSizing: "border-box",
               }}
             >
               <div
                 style={{
-                  fontSize: isMobile ? "20px" : "22px",
-                  fontWeight: 500,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: isMobile ? "7px 12px" : "8px 14px",
+                  borderRadius: 999,
+                  border: `1px solid ${goldBorder}`,
+                  background: goldSoft,
+                  color: gold,
+                  fontSize: isMobile ? "11px" : "12px",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  fontFamily: styles?.fonts?.nav,
+                  boxShadow: `0 10px 24px ${goldSoftStrong}`,
+                  marginBottom: 16,
+                }}
+              >
+                <span
+                  style={{
+                    width: 22,
+                    height: 1,
+                    background: `linear-gradient(90deg, rgba(199,166,106,0.18), ${gold})`,
+                  }}
+                />
+                <span>Company Information</span>
+              </div>
+
+              <div
+                style={{
+                  fontSize: isMobile ? "22px" : "24px",
+                  fontWeight: 700,
                   color: fg,
                   fontFamily: displayFont,
                   letterSpacing: "-0.02em",
-                  marginBottom: 20,
+                  marginBottom: 22,
                 }}
               >
-                Company Information
+                {c.companyName || "주식회사 캡스톤그룹"}
               </div>
 
-              <div style={{ display: "grid", gap: 18 }}>
-                <div>
+              <div style={{ display: "grid", gap: 0 }}>
+                <div style={infoBlock}>
                   <div style={labelStyle}>상호명</div>
                   <div style={valueStyle}>{c.companyName || "-"}</div>
                 </div>
 
                 <div style={divider} />
 
-                <div>
+                <div style={infoBlock}>
                   <div style={labelStyle}>주소</div>
-                  <div style={valueStyle}>{address || "-"}</div>
+                  <div style={addressValueStyle}>{address || "-"}</div>
                 </div>
 
                 <div style={divider} />
@@ -275,6 +302,7 @@ export default function ContactSection({
                     display: "grid",
                     gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
                     gap: 18,
+                    ...infoBlock,
                   }}
                 >
                   <div>
@@ -290,7 +318,6 @@ export default function ContactSection({
               </div>
             </div>
 
-            {/* RIGHT */}
             <div
               style={{
                 padding: cardPad,
@@ -303,8 +330,37 @@ export default function ContactSection({
             >
               <div
                 style={{
-                  fontSize: isMobile ? "20px" : "22px",
-                  fontWeight: 500,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 10,
+                  padding: isMobile ? "7px 12px" : "8px 14px",
+                  borderRadius: 999,
+                  border: `1px solid ${goldBorder}`,
+                  background: goldSoft,
+                  color: gold,
+                  fontSize: isMobile ? "11px" : "12px",
+                  fontWeight: 700,
+                  letterSpacing: "0.12em",
+                  textTransform: "uppercase",
+                  fontFamily: styles?.fonts?.nav,
+                  boxShadow: `0 10px 24px ${goldSoftStrong}`,
+                  marginBottom: 16,
+                }}
+              >
+                <span
+                  style={{
+                    width: 22,
+                    height: 1,
+                    background: `linear-gradient(90deg, rgba(199,166,106,0.18), ${gold})`,
+                  }}
+                />
+                <span>Message</span>
+              </div>
+
+              <div
+                style={{
+                  fontSize: isMobile ? "22px" : "24px",
+                  fontWeight: 700,
                   color: fg,
                   fontFamily: displayFont,
                   letterSpacing: "-0.02em",
@@ -329,23 +385,27 @@ export default function ContactSection({
                   }}
                 >
                   <div>
-                    <div style={labelStyle}>성명</div>
+                    <div style={labelStyle}>
+                      {formText?.fields?.name || "성명"}
+                    </div>
                     <input
                       type="text"
                       value={form.name}
                       onChange={handleChange("name")}
-                      placeholder="성명"
+                      placeholder={formText?.fields?.name || "성명"}
                       style={inputStyle}
                     />
                   </div>
 
                   <div>
-                    <div style={labelStyle}>소속</div>
+                    <div style={labelStyle}>
+                      {formText?.fields?.org || "소속"}
+                    </div>
                     <input
                       type="text"
                       value={form.org}
                       onChange={handleChange("org")}
-                      placeholder="소속"
+                      placeholder={formText?.fields?.org || "소속"}
                       style={inputStyle}
                     />
                   </div>
@@ -359,34 +419,40 @@ export default function ContactSection({
                   }}
                 >
                   <div>
-                    <div style={labelStyle}>핸드폰번호</div>
+                    <div style={labelStyle}>
+                      {formText?.fields?.phone || "핸드폰번호"}
+                    </div>
                     <input
                       type="text"
                       value={form.phone}
                       onChange={handleChange("phone")}
-                      placeholder="핸드폰번호"
+                      placeholder={formText?.fields?.phone || "핸드폰번호"}
                       style={inputStyle}
                     />
                   </div>
 
                   <div>
-                    <div style={labelStyle}>이메일주소</div>
+                    <div style={labelStyle}>
+                      {formText?.fields?.email || "이메일주소"}
+                    </div>
                     <input
                       type="email"
                       value={form.email}
                       onChange={handleChange("email")}
-                      placeholder="이메일주소"
+                      placeholder={formText?.fields?.email || "이메일주소"}
                       style={inputStyle}
                     />
                   </div>
                 </div>
 
                 <div>
-                  <div style={labelStyle}>문의사항</div>
+                  <div style={labelStyle}>
+                    {formText?.fields?.inquiry || "문의사항"}
+                  </div>
                   <textarea
                     value={form.inquiry}
                     onChange={handleChange("inquiry")}
-                    placeholder="문의사항"
+                    placeholder={formText?.fields?.inquiry || "문의사항"}
                     style={textareaStyle}
                   />
                 </div>
@@ -395,7 +461,7 @@ export default function ContactSection({
                   style={{
                     display: "flex",
                     justifyContent: isMobile ? "stretch" : "flex-start",
-                    marginTop: 2,
+                    marginTop: 4,
                   }}
                 >
                   <button type="submit" style={submitBtn}>

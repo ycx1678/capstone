@@ -1,8 +1,9 @@
-// src/components/LogoParticleMorphCanvas.js
 import { useEffect, useMemo, useRef } from "react";
 
 const easeInOutCubic = (t) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+
+const easeOutCubic = (t) => 1 - Math.pow(1 - t, 3);
 
 function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
@@ -23,7 +24,7 @@ function randomSpherePoint(radius) {
 export default function LogoParticleMorphCanvas({
   src,
   bg = "#000",
-  color = "199,166,106", // ✅ 전체 금색 기본값
+  color = "199,166,106",
   density = 1400,
 
   sphereRadiusFactor = 0.42,
@@ -39,7 +40,7 @@ export default function LogoParticleMorphCanvas({
   scatterSec = 1.4,
   freeSec = 0.9,
   gatherSec = 1.8,
-  holdSec = 0.8,
+  holdSec = 1.25,
 
   logoFitW = 0.62,
   logoFitH = 0.26,
@@ -47,9 +48,8 @@ export default function LogoParticleMorphCanvas({
   logoScale = 1.5,
 
   overlayStrength = 1.0,
-  overlayFadeInFrac = 0.4,
-
-  dprCap = 3,
+  dprCap = 5,
+  overlayOversample = 3.2,
 
   centerOffsetY = 0,
 
@@ -64,6 +64,7 @@ export default function LogoParticleMorphCanvas({
     particles: [],
     w: 0,
     h: 0,
+    cssDpr: 1,
     lastSizeKey: "",
     overlayRect: null,
     sphereR: 0,
@@ -74,14 +75,25 @@ export default function LogoParticleMorphCanvas({
   });
 
   const off = useMemo(() => document.createElement("canvas"), []);
-  const offCtx = useMemo(() => off.getContext("2d"), [off]);
+  const offCtx = useMemo(
+    () =>
+      off.getContext("2d", {
+        alpha: true,
+        willReadFrequently: false,
+      }),
+    [off]
+  );
 
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    const ctx = canvas.getContext("2d", { alpha: true, desynchronized: true });
-    if (!ctx) return;
+    const ctx = canvas.getContext("2d", {
+      alpha: false,
+      desynchronized: false,
+      willReadFrequently: false,
+    });
+    if (!ctx || !offCtx) return;
 
     let raf = 0;
     let ro = null;
@@ -89,16 +101,20 @@ export default function LogoParticleMorphCanvas({
     const cycleSec = orbitSec + scatterSec + freeSec + gatherSec + holdSec;
 
     const buildOverlayRect = (img) => {
-      const { w, h } = stateRef.current;
+      const { w, h, cssDpr } = stateRef.current;
       if (!w || !h || !img) return null;
 
       const boxW = w * Math.min(0.98, logoFitW * logoScale);
       const boxH = h * Math.min(0.98, logoFitH * logoScale);
 
-      const ir = img.width / img.height;
+      const imgW = img.naturalWidth || img.width || 1;
+      const imgH = img.naturalHeight || img.height || 1;
+      const ir = imgW / imgH;
       const br = boxW / boxH;
 
-      let drawW, drawH;
+      let drawW;
+      let drawH;
+
       if (ir > br) {
         drawW = boxW;
         drawH = boxW / ir;
@@ -110,10 +126,18 @@ export default function LogoParticleMorphCanvas({
       const x = (w - drawW) / 2;
       const y = (h - drawH) / 2 + logoOffsetY + centerOffsetY;
 
-      off.width = Math.max(1, Math.floor(drawW));
-      off.height = Math.max(1, Math.floor(drawH));
-      offCtx.clearRect(0, 0, off.width, off.height);
-      offCtx.drawImage(img, 0, 0, off.width, off.height);
+      const oversample = clamp(overlayOversample, 1, 6);
+      const offW = Math.max(1, Math.round(drawW * cssDpr * oversample));
+      const offH = Math.max(1, Math.round(drawH * cssDpr * oversample));
+
+      off.width = offW;
+      off.height = offH;
+
+      offCtx.setTransform(1, 0, 0, 1, 0, 0);
+      offCtx.clearRect(0, 0, offW, offH);
+      offCtx.imageSmoothingEnabled = true;
+      offCtx.imageSmoothingQuality = "high";
+      offCtx.drawImage(img, 0, 0, offW, offH);
 
       return { x, y, w: drawW, h: drawH };
     };
@@ -135,8 +159,8 @@ export default function LogoParticleMorphCanvas({
           tx: w / 2,
           ty: h / 2 + centerOffsetY,
 
-          r: 0.7 + Math.random() * 0.8,
-          a: 0.55 + Math.random() * 0.35,
+          r: 0.72 + Math.random() * 0.85,
+          a: 0.56 + Math.random() * 0.34,
 
           ph: Math.random() * Math.PI * 2,
           spd: 0.7 + Math.random() * 0.9,
@@ -148,24 +172,34 @@ export default function LogoParticleMorphCanvas({
 
     const resize = () => {
       const rect = canvas.getBoundingClientRect();
-      const w = Math.max(1, Math.floor(rect.width));
-      const h = Math.max(1, Math.floor(rect.height));
+      const w = Math.max(1, Math.round(rect.width));
+      const h = Math.max(1, Math.round(rect.height));
 
-      const dpr = Math.max(1, Math.min(dprCap, window.devicePixelRatio || 1));
+      const rawDpr = window.devicePixelRatio || 1;
+      const dpr = Math.max(1, Math.min(dprCap, rawDpr));
+
+      const pixelW = Math.max(1, Math.round(w * dpr));
+      const pixelH = Math.max(1, Math.round(h * dpr));
+
       const sizeKey = `${w}x${h}@${dpr}`;
       if (stateRef.current.lastSizeKey === sizeKey) return;
       stateRef.current.lastSizeKey = sizeKey;
 
-      canvas.width = Math.floor(w * dpr);
-      canvas.height = Math.floor(h * dpr);
+      canvas.width = pixelW;
+      canvas.height = pixelH;
       canvas.style.width = `${w}px`;
       canvas.style.height = `${h}px`;
+
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
       stateRef.current.w = w;
       stateRef.current.h = h;
+      stateRef.current.cssDpr = dpr;
 
       reseedParticles();
+
       if (imgRef.current) {
         stateRef.current.overlayRect = buildOverlayRect(imgRef.current);
       }
@@ -249,14 +283,16 @@ export default function LogoParticleMorphCanvas({
       const scatterE = easeInOutCubic(clamp(scatterP, 0, 1));
       const gatherE = easeInOutCubic(clamp(gatherP, 0, 1));
 
+      // ✅ 로고는 gather 마지막 구간에서 자연스럽게 페이드인
       let overlayAlpha = 0;
       if (overlayRect && imgRef.current) {
         if (mode === "gather") {
-          const start = 1 - clamp(overlayFadeInFrac, 0.05, 0.95);
-          const k = clamp((gatherP - start) / (1 - start), 0, 1);
-          overlayAlpha = overlayStrength * easeInOutCubic(k);
+          const revealStart = 0.9;
+          const k = clamp((gatherP - revealStart) / (1 - revealStart), 0, 1);
+          const eased = easeOutCubic(k);
+          overlayAlpha = clamp(overlayStrength * eased, 0, 1);
         } else if (mode === "hold") {
-          overlayAlpha = overlayStrength;
+          overlayAlpha = clamp(Math.max(overlayStrength, 0.98), 0, 1);
         }
       }
 
@@ -264,7 +300,7 @@ export default function LogoParticleMorphCanvas({
         mode === "hold"
           ? 0
           : mode === "gather"
-          ? clamp(1 - overlayAlpha, 0, 1)
+          ? clamp(1 - overlayAlpha * 1.08, 0, 1)
           : 1;
 
       const cx = w / 2;
@@ -280,9 +316,10 @@ export default function LogoParticleMorphCanvas({
       const baseSafe = Math.min(1, allowX / approxMaxX, allowY / approxMaxY);
 
       ctx.globalCompositeOperation = "source-over";
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
 
       const tt = tmsUse * 0.001;
-
       const curOrbitSpeed =
         mode === "scatter" || mode === "free" ? orbitSpeedScatter : orbitSpeed;
 
@@ -336,8 +373,7 @@ export default function LogoParticleMorphCanvas({
 
         const rr = d.r * (0.9 + d.z * 0.28);
 
-        // ✅ 전체 금색 + 은은한 glow
-        ctx.shadowColor = `rgba(${color},0.32)`;
+        ctx.shadowColor = `rgba(${color},0.34)`;
         ctx.shadowBlur = 6;
         ctx.fillStyle = `rgba(${color},${clamp(alpha, 0, 1)})`;
         ctx.beginPath();
@@ -345,7 +381,6 @@ export default function LogoParticleMorphCanvas({
         ctx.fill();
       }
 
-      // shadow 상태 정리
       ctx.shadowBlur = 0;
       ctx.shadowColor = "transparent";
 
@@ -354,24 +389,38 @@ export default function LogoParticleMorphCanvas({
         ctx.save();
         ctx.globalAlpha = overlayAlpha;
         ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.shadowColor = `rgba(${color},0.20)`;
+        ctx.shadowBlur = 16;
         ctx.drawImage(off, x, y, ow, oh);
+        ctx.shadowBlur = 0;
         ctx.restore();
       }
     };
 
-    ro = new ResizeObserver(resize);
+    ro = new ResizeObserver(() => {
+      resize();
+    });
     ro.observe(canvas);
+
     resize();
 
     const img = new Image();
-    img.onload = () => {
+    img.decoding = "async";
+
+    img.onload = async () => {
+      try {
+        if (img.decode) await img.decode();
+      } catch (e) {}
       imgRef.current = img;
       stateRef.current.overlayRect = buildOverlayRect(img);
     };
+
     img.onerror = () => {
       imgRef.current = null;
       stateRef.current.overlayRect = null;
     };
+
     img.src = src;
 
     raf = requestAnimationFrame(render);
@@ -402,8 +451,8 @@ export default function LogoParticleMorphCanvas({
     logoOffsetY,
     logoScale,
     overlayStrength,
-    overlayFadeInFrac,
     dprCap,
+    overlayOversample,
     centerOffsetY,
     oneShot,
     onModeChange,
@@ -415,7 +464,11 @@ export default function LogoParticleMorphCanvas({
   return (
     <canvas
       ref={canvasRef}
-      style={{ width: "100%", height: "100%", display: "block" }}
+      style={{
+        width: "100%",
+        height: "100%",
+        display: "block",
+      }}
     />
   );
 }

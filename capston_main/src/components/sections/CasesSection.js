@@ -1,6 +1,6 @@
-// src/components/sections/CasesSection.js
 import { useState } from "react";
 import ImageCard from "../cards/ImageCard";
+import SectionLabel from "../SectionLabel";
 
 const CASE_SLOTS = 8;
 
@@ -65,6 +65,10 @@ export default function CasesSection({
 }) {
   const t = styles.themes?.[theme] ?? styles.themes.dark;
   const blocks = Array.isArray(data?.cases?.blocks) ? data.cases.blocks : [];
+  const sectionLabel = data?.cases?.sectionLabel || "CASES";
+  const gold = styles?.brand?.base || "#C7A66A";
+  const goldBorder = styles?.brand?.border || "rgba(199,166,106,0.34)";
+  const goldSoft = styles?.brand?.soft || "rgba(199,166,106,0.10)";
 
   const [openMap, setOpenMap] = useState(() => ({}));
   const toggleOpen = (bi) =>
@@ -83,12 +87,27 @@ export default function CasesSection({
     >
       <style>{`
         .csbEmptyCard:hover { opacity: 0.85; }
+
+        @media (hover:hover) and (pointer:fine) {
+          .csCasesBtn {
+            transition:
+              transform 160ms ease,
+              border-color 160ms ease,
+              background 160ms ease,
+              opacity 160ms ease;
+          }
+          .csCasesBtn:hover {
+            transform: translateY(-1px);
+            opacity: 1;
+          }
+        }
       `}</style>
 
       <div style={styles.container}>
-        <div style={{ display: "grid", gap: "clamp(26px, 4vw, 44px)" }}>
+        <div style={{ display: "grid", gap: "clamp(28px, 4vw, 48px)" }}>
           {blocks.map((blk, bi) => {
             const imgs = ensureSlots(blk?.images, CASE_SLOTS);
+            const eyebrow = blk?.eyebrow || sectionLabel;
 
             const isOpen = !!openMap[bi];
             const visibleImgs = isMobile && !isOpen ? imgs.slice(0, 4) : imgs;
@@ -98,16 +117,20 @@ export default function CasesSection({
                 key={bi}
                 style={{
                   borderTop: `1px solid ${t.border}`,
-                  paddingTop: "clamp(18px, 2.6vw, 26px)",
+                  paddingTop: "clamp(18px, 2.6vw, 28px)",
                 }}
               >
-                {/* 블록 타이틀 */}
+                <SectionLabel text={eyebrow} styles={styles} />
+
                 <div
                   style={{
-                    fontSize: "clamp(24px, 3.2vw, 34px)",
-                    fontWeight: 500,
+                    marginTop: 14,
+                    fontSize: isMobile
+                      ? "clamp(24px, 6.4vw, 30px)"
+                      : "clamp(28px, 3.2vw, 38px)",
+                    fontWeight: 700,
                     letterSpacing: "-0.03em",
-                    lineHeight: 1.18,
+                    lineHeight: 1.2,
                     fontFamily: titleFont,
                     wordBreak: "keep-all",
                     ...styles.text(theme),
@@ -116,17 +139,19 @@ export default function CasesSection({
                   {blk?.title}
                 </div>
 
-                {/* 블록 서브타이틀 */}
                 {!!blk?.subtitle && (
                   <div
                     style={{
-                      marginTop: 8,
+                      marginTop: 9,
                       fontWeight: 500,
-                      fontSize: "clamp(13px, 2vw, 15px)",
-                      lineHeight: 1.65,
+                      fontSize: isMobile
+                        ? "clamp(13px, 3.4vw, 14px)"
+                        : "clamp(14px, 1.15vw, 16px)",
+                      lineHeight: 1.72,
                       letterSpacing: "-0.01em",
                       fontFamily: titleFont,
                       wordBreak: "keep-all",
+                      maxWidth: isMobile ? "100%" : 1080,
                       ...styles.subText(theme),
                     }}
                   >
@@ -134,10 +159,9 @@ export default function CasesSection({
                   </div>
                 )}
 
-                {/* 이미지 그리드 */}
                 <div
                   style={{
-                    marginTop: 18,
+                    marginTop: 20,
                     display: "grid",
                     gridTemplateColumns: isMobile
                       ? "repeat(2, minmax(0, 1fr))"
@@ -159,7 +183,6 @@ export default function CasesSection({
                   )}
                 </div>
 
-                {/* 모바일 더보기/접기 */}
                 {isMobile ? (
                   <div
                     style={{
@@ -170,16 +193,14 @@ export default function CasesSection({
                   >
                     <button
                       type="button"
+                      className="csCasesBtn"
                       onClick={() => toggleOpen(bi)}
                       style={{
                         padding: "10px 18px",
                         borderRadius: 12,
-                        border: `1px solid ${t.border}`,
-                        background:
-                          theme === "dark"
-                            ? "rgba(255,255,255,0.04)"
-                            : "rgba(0,0,0,0.04)",
-                        color: t.fg,
+                        border: `1px solid ${goldBorder}`,
+                        background: goldSoft,
+                        color: gold,
                         fontWeight: 700,
                         letterSpacing: "-0.01em",
                         fontFamily: titleFont,

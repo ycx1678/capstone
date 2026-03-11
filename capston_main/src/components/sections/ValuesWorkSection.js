@@ -1,4 +1,5 @@
 import React, { useMemo } from "react";
+import SectionLabel from "../SectionLabel";
 
 export default function ValuesWorkSection({
   data,
@@ -16,19 +17,26 @@ export default function ValuesWorkSection({
     data?.sectionBg?.valuesWork || data?.work?.backgroundImageSrc || "";
 
   const sectionBg = "#0C111B";
-  const textMain = "rgba(255,255,255,0.96)";
-  const textSub = "rgba(255,255,255,0.82)";
-  const hairline = "rgba(255,255,255,0.10)";
-  const panelBorder = "rgba(255,255,255,0.12)";
+  const textMain = "rgba(255,255,255,0.98)";
+  const textSub = "rgba(255,255,255,0.88)";
+  const textBodyBright = "rgba(255,255,255,0.90)";
+  const hairline = "rgba(255,255,255,0.12)";
+  const panelBorder = "rgba(255,255,255,0.14)";
   const gold = brand.base || "#C7A66A";
-  const goldBorder = "rgba(199,166,106,0.30)";
+  const goldBorder = "rgba(199,166,106,0.34)";
+  const goldBgSoft = "rgba(199,166,106,0.12)";
+  const goldBgStrong = "rgba(199,166,106,0.16)";
 
-  const sectionPadY = isMobile ? 42 : 52;
-  const innerPad = isMobile ? "14px" : "16px";
+  const sectionPadY = isMobile ? 46 : 58;
+  const innerPad = isMobile ? "16px" : "20px";
 
   const sectionTitleSize = isMobile
-    ? "clamp(20px, 5vw, 24px)"
-    : "clamp(22px, 2vw, 28px)";
+    ? "clamp(24px, 5.8vw, 30px)"
+    : "clamp(30px, 2.4vw, 38px)";
+
+  const sectionSubSize = isMobile
+    ? "clamp(14px, 3.4vw, 16px)"
+    : "clamp(15.5px, 1.2vw, 17.5px)";
 
   const cardBase = styles?.ui?.card
     ? styles.ui.card("dark", { variant: "premium" })
@@ -38,7 +46,7 @@ export default function ValuesWorkSection({
     ...cardBase,
     border: `1px solid ${panelBorder}`,
     background: "rgba(255,255,255,0.05)",
-    borderRadius: 22,
+    borderRadius: 24,
     overflow: "hidden",
     boxSizing: "border-box",
     backdropFilter: "blur(8px)",
@@ -47,141 +55,66 @@ export default function ValuesWorkSection({
   };
 
   const hr = {
-    marginTop: 10,
+    marginTop: 12,
     height: 1,
-    background:
-      "linear-gradient(90deg, rgba(255,255,255,0.16) 0%, rgba(255,255,255,0.04) 100%)",
+    background: `linear-gradient(90deg, rgba(199,166,106,0.42) 0%, rgba(255,255,255,0.06) 100%)`,
   };
 
+  const sectionEyebrow =
+    data?.work?.accentLabel || data?.values?.accentLabel || "VALUE&WORK";
+
+  const sectionTitle = data?.work?.title || "주요 업무";
+  const sectionSubtitle =
+    data?.work?.subtitle || "안정된 행사 운영과 효율적인 업무 진행";
+
   const workIcons = [
-    <svg
-      key="i1"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i1" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="M7 9h10M7 13h6" />
       <circle cx="17" cy="15" r="1.2" fill="currentColor" stroke="none" />
     </svg>,
-    <svg
-      key="i2"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i2" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="8" />
       <path d="M12 8v5l3 2" />
     </svg>,
-    <svg
-      key="i3"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i3" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M8 10a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z" />
       <path d="M16 13a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
       <path d="M3 19c.7-2.8 3.1-4 5-4s4.3 1.2 5 4" />
       <path d="M13.5 19c.5-1.9 2.1-2.8 3.5-2.8 1.3 0 2.8.8 3.5 2.8" />
     </svg>,
-    <svg
-      key="i4"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i4" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M5 6h14v12H5z" />
       <path d="M8 10h8M8 14h5" />
       <path d="M15.5 3.5v5" />
     </svg>,
-    <svg
-      key="i5"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i5" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 6h16" />
       <path d="M6 10h12" />
       <path d="M8 14h8" />
       <path d="M10 18h4" />
     </svg>,
-    <svg
-      key="i6"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i6" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4Z" />
       <path d="M9.5 12.5l1.6 1.6 3.4-3.8" />
     </svg>,
-    <svg
-      key="i7"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i7" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <path d="M4 18v-5l5-5 3 3-7 7H4Z" />
       <path d="M14 8l2-2 4 4-2 2" />
       <path d="M13 13l5 5" />
     </svg>,
-    <svg
-      key="i8"
-      viewBox="0 0 24 24"
-      width="22"
-      height="22"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
+    <svg key="i8" viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
       <rect x="3" y="5" width="18" height="14" rx="2" />
       <path d="M8 9h8M8 13h8M8 17h5" />
     </svg>,
   ];
 
   const iconBoxStyle = {
-    width: isMobile ? 40 : 44,
-    height: isMobile ? 40 : 44,
-    borderRadius: 12,
+    width: isMobile ? 42 : 46,
+    height: isMobile ? 42 : 46,
+    borderRadius: 13,
     border: `1px solid ${goldBorder}`,
-    background:
-      "linear-gradient(180deg, rgba(199,166,106,0.16) 0%, rgba(199,166,106,0.08) 100%)",
+    background: `linear-gradient(180deg, ${goldBgStrong} 0%, ${goldBgSoft} 100%)`,
     boxShadow:
       "inset 0 1px 0 rgba(255,255,255,0.06), 0 10px 24px rgba(0,0,0,0.16)",
     color: gold,
@@ -216,7 +149,7 @@ export default function ValuesWorkSection({
           .vwWorkItem:hover {
             transform: translateY(-3px);
             box-shadow: 0 18px 42px rgba(0,0,0,0.24);
-            border-color: rgba(199,166,106,0.34);
+            border-color: rgba(199,166,106,0.36);
             background: rgba(255,255,255,0.08);
           }
         }
@@ -259,64 +192,62 @@ export default function ValuesWorkSection({
           ...styles.container,
           position: "relative",
           zIndex: 2,
-          maxWidth: "1300px",
+          maxWidth: "1320px",
           margin: "0 auto",
           paddingTop: sectionPadY,
-          paddingBottom: sectionPadY + 6,
+          paddingBottom: sectionPadY + 8,
           boxSizing: "border-box",
         }}
       >
         <div
           style={{
-            minHeight: isMobile ? "auto" : 64,
+            minHeight: isMobile ? "auto" : 82,
             display: "flex",
             flexDirection: "column",
             justifyContent: "flex-end",
           }}
         >
-          <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 10,
-              color: gold,
-              fontSize: styles?.type?.xs ?? "12px",
-              fontWeight: 700,
-              letterSpacing: "0.12em",
-              textTransform: "uppercase",
-              fontFamily: styles?.fonts?.nav,
-            }}
-          >
-            <span
-              style={{
-                width: 34,
-                height: 1,
-                background: `linear-gradient(90deg, rgba(199,166,106,0.18), ${gold})`,
-              }}
-            />
-            <span>About us</span>
-          </div>
+          <SectionLabel text={sectionEyebrow} styles={styles} />
 
           <div
             style={{
               marginTop: 14,
               fontSize: sectionTitleSize,
-              fontWeight: 500,
+              fontWeight: 700,
               letterSpacing: "-0.03em",
               color: textMain,
               fontFamily: styles?.fonts?.display,
               lineHeight: 1.18,
+              wordBreak: "keep-all",
             }}
           >
-            {data?.work?.title || "주요 업무"}
+            {sectionTitle}
           </div>
+
+          {!!sectionSubtitle && (
+            <div
+              style={{
+                marginTop: 10,
+                fontSize: sectionSubSize,
+                fontWeight: 500,
+                lineHeight: 1.72,
+                color: textSub,
+                fontFamily: styles?.fonts?.body,
+                maxWidth: isMobile ? "100%" : 980,
+                wordBreak: "keep-all",
+              }}
+            >
+              {sectionSubtitle}
+            </div>
+          )}
+
           <div style={hr} />
         </div>
 
         <div
           style={{
             ...shellBase,
-            marginTop: isMobile ? 14 : 16,
+            marginTop: isMobile ? 16 : 18,
             padding: innerPad,
             width: "100%",
             boxSizing: "border-box",
@@ -328,7 +259,7 @@ export default function ValuesWorkSection({
               gridTemplateColumns: isMobile
                 ? "1fr"
                 : "repeat(4, minmax(0, 1fr))",
-              gap: isMobile ? 12 : 14,
+              gap: isMobile ? 12 : 16,
             }}
           >
             {workItems.map((w, i) => (
@@ -337,29 +268,27 @@ export default function ValuesWorkSection({
                 className="vwWorkItem"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: isMobile ? "40px 1fr" : "44px 1fr",
-                  gap: isMobile ? 10 : 12,
+                  gridTemplateColumns: isMobile ? "42px 1fr" : "46px 1fr",
+                  gap: isMobile ? 11 : 13,
                   alignItems: "start",
-                  minHeight: isMobile ? 84 : 98,
-                  padding: isMobile ? "12px 12px" : "14px 14px",
-                  borderRadius: 16,
+                  minHeight: isMobile ? 96 : 116,
+                  padding: isMobile ? "14px 13px" : "16px 16px",
+                  borderRadius: 18,
                   border: `1px solid ${hairline}`,
                   background: "rgba(255,255,255,0.06)",
                   boxSizing: "border-box",
                 }}
               >
-                <div style={iconBoxStyle}>
-                  {workIcons[i % workIcons.length]}
-                </div>
+                <div style={iconBoxStyle}>{workIcons[i % workIcons.length]}</div>
 
                 <div style={{ minWidth: 0 }}>
                   <div
                     style={{
-                      fontWeight: 500,
-                      fontSize: isMobile ? 13.5 : 14,
-                      lineHeight: 1.3,
+                      fontWeight: 700,
+                      fontSize: isMobile ? 14 : 15,
+                      lineHeight: 1.34,
                       letterSpacing: "-0.02em",
-                      color: textMain,
+                      color: gold,
                       fontFamily: styles?.fonts?.body,
                       wordBreak: "keep-all",
                     }}
@@ -369,12 +298,13 @@ export default function ValuesWorkSection({
 
                   <div
                     style={{
-                      marginTop: 6,
-                      fontSize: isMobile ? 12.5 : 13,
-                      lineHeight: isMobile ? 1.55 : 1.58,
-                      color: textSub,
+                      marginTop: 7,
+                      fontSize: isMobile ? 13 : 13.5,
+                      lineHeight: isMobile ? 1.64 : 1.66,
+                      color: textBodyBright,
                       whiteSpace: "pre-line",
                       wordBreak: "keep-all",
+                      overflowWrap: "break-word",
                       fontFamily: styles?.fonts?.body,
                       fontWeight: 500,
                     }}

@@ -36,7 +36,8 @@ export default function Header({ data, styles }) {
   const brandBorder = styles?.brand?.border || "rgba(199,166,106,0.34)";
   const brandBorderStrong =
     styles?.brand?.borderStrong || "rgba(199,166,106,0.5)";
-  const brandSoftStrong = styles?.brand?.softStrong || "rgba(199,166,106,0.18)";
+  const brandSoftStrong =
+    styles?.brand?.softStrong || "rgba(199,166,106,0.18)";
   const brandRgb = styles?.brand?.rgb || "199, 166, 106";
 
   const normalizeId = (id) => String(id || "").replace(/^#/, "");
@@ -45,6 +46,16 @@ export default function Header({ data, styles }) {
     const key = normalizeId(id);
     if (!key) return null;
     return document.getElementById(key);
+  };
+
+  const isGoldNav = (item) => {
+    const label = String(item?.label || "").toLowerCase().replace(/\s+/g, "");
+    const id = normalizeId(item?.id).toLowerCase();
+    return (
+      label.includes("value&work") ||
+      label.includes("valuework") ||
+      id === "valueswork"
+    );
   };
 
   const scrollToEl = (el) => {
@@ -154,21 +165,26 @@ export default function Header({ data, styles }) {
   }, [isMobile]);
 
   const headerGlass =
-    themeName === "dark" ? "rgba(7,9,13,0.68)" : "rgba(255,255,255,0.82)";
+    themeName === "dark" ? "rgba(7,9,13,0.72)" : "rgba(255,255,255,0.84)";
   const borderLine =
     theme.headerBorder ?? theme.border ?? "rgba(255,255,255,0.08)";
 
   const navWrapBg =
-    themeName === "dark" ? "rgba(255,255,255,0.045)" : "rgba(0,0,0,0.035)";
+    themeName === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.035)";
 
   const navWrapBorder =
-    themeName === "dark" ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.07)";
+    themeName === "dark" ? "rgba(255,255,255,0.085)" : "rgba(0,0,0,0.07)";
 
   const activePillBg =
-    themeName === "dark" ? "rgba(255,255,255,0.055)" : "rgba(0,0,0,0.045)";
+    themeName === "dark" ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.045)";
 
-  const logoHDesktop = 40;
-  const logoHMobile = 32;
+  const goldPillBg =
+    themeName === "dark"
+      ? `rgba(${brandRgb},0.12)`
+      : `rgba(${brandRgb},0.10)`;
+
+  const logoHDesktop = 46;
+  const logoHMobile = 36;
 
   const innerPadYDesktop = 9;
   const innerPadYMobile = 7;
@@ -193,11 +209,11 @@ export default function Header({ data, styles }) {
     position: "absolute",
     right: 0,
     top: "calc(100% + 10px)",
-    minWidth: 220,
+    minWidth: 230,
     borderRadius: 18,
     border: `${tok.border.w}px solid ${navWrapBorder}`,
     background:
-      themeName === "dark" ? "rgba(10,12,16,0.92)" : "rgba(255,255,255,0.96)",
+      themeName === "dark" ? "rgba(10,12,16,0.94)" : "rgba(255,255,255,0.97)",
     boxShadow:
       themeName === "dark"
         ? "0 22px 70px rgba(0,0,0,0.56)"
@@ -208,28 +224,40 @@ export default function Header({ data, styles }) {
     zIndex: 9999,
   };
 
-  const dropdownItemStyle = (isActive) => ({
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    gap: 12,
-    padding: "12px 14px",
-    textDecoration: "none",
-    color: theme.fg,
-    fontFamily: styles.fonts?.nav,
-    fontWeight: isActive ? 700 : 700,
-    fontSize: styles.type?.small ?? styles.S,
-    letterSpacing: styles.type?.letter?.menu ?? "0.03em",
-    textTransform: "uppercase",
-    background: isActive
-      ? themeName === "dark"
-        ? "rgba(255,255,255,0.055)"
-        : "rgba(0,0,0,0.04)"
-      : "transparent",
-    borderLeft: `${tok.border.w}px solid ${isActive ? brand : "transparent"}`,
-    cursor: "pointer",
-    boxSizing: "border-box",
-  });
+  const dropdownItemStyle = (item, isActive) => {
+    const gold = isGoldNav(item);
+
+    return {
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "space-between",
+      gap: 12,
+      padding: "12px 14px",
+      textDecoration: "none",
+      color: gold ? brand : theme.fg,
+      fontFamily: styles.fonts?.nav,
+      fontWeight: 700,
+      fontSize: styles.type?.small ?? styles.S,
+      letterSpacing: styles.type?.letter?.menu ?? "0.03em",
+      textTransform: "uppercase",
+      background: isActive
+        ? themeName === "dark"
+          ? gold
+            ? `rgba(${brandRgb},0.12)`
+            : "rgba(255,255,255,0.055)"
+          : gold
+          ? `rgba(${brandRgb},0.09)`
+          : "rgba(0,0,0,0.04)"
+        : gold
+        ? goldPillBg
+        : "transparent",
+      borderLeft: `${tok.border.w}px solid ${
+        isActive || gold ? brand : "transparent"
+      }`,
+      cursor: "pointer",
+      boxSizing: "border-box",
+    };
+  };
 
   return (
     <header
@@ -274,6 +302,10 @@ export default function Header({ data, styles }) {
                 ? "rgba(255,255,255,0.055)"
                 : "rgba(0,0,0,0.04)"
             };
+          }
+
+          .capDropItem.capDropItemGold:hover {
+            background: rgba(${brandRgb},0.14);
           }
         }
 
@@ -405,7 +437,7 @@ export default function Header({ data, styles }) {
               backdropFilter: "blur(10px)",
               WebkitBackdropFilter: "blur(10px)",
               flex: "0 1 auto",
-              maxWidth: isMobile ? "70vw" : "min(76vw, 820px)",
+              maxWidth: isMobile ? "72vw" : "min(80vw, 900px)",
               boxShadow:
                 themeName === "dark"
                   ? "inset 0 1px 0 rgba(255,255,255,0.04)"
@@ -416,7 +448,7 @@ export default function Header({ data, styles }) {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 8,
+                gap: isMobile ? 6 : 8,
                 flexWrap: "nowrap",
                 overflow: "hidden",
                 minWidth: 0,
@@ -425,6 +457,7 @@ export default function Header({ data, styles }) {
               {primaryNav.map((n) => {
                 const id = normalizeId(n.id);
                 const isActive = id && id === activeId;
+                const gold = isGoldNav(n);
 
                 return (
                   <a
@@ -436,15 +469,21 @@ export default function Header({ data, styles }) {
                       ...styles.navLink(themeName),
                       fontFamily: styles.fonts?.nav,
                       position: "relative",
-                      fontWeight: 700,
-                      opacity: isActive ? 1 : 0.92,
+                      fontWeight: gold || isActive ? 700 : 700,
+                      opacity: isActive ? 1 : gold ? 0.98 : 0.92,
                       padding: isMobile ? "6px 9px" : "7px 11px",
                       borderRadius: tok.radius.pill,
-                      background: isActive ? activePillBg : "transparent",
+                      background: isActive
+                        ? gold
+                          ? goldPillBg
+                          : activePillBg
+                        : gold
+                        ? goldPillBg
+                        : "transparent",
                       border: `${tok.border.w}px solid ${
-                        isActive ? brandBorderStrong : "transparent"
+                        isActive || gold ? brandBorderStrong : "transparent"
                       }`,
-                      color: isActive ? theme.fg : theme.fg,
+                      color: gold ? brand : theme.fg,
                       whiteSpace: "nowrap",
                       lineHeight: 1.1,
                       textTransform: "uppercase",
@@ -460,13 +499,15 @@ export default function Header({ data, styles }) {
                         bottom: 4,
                         height: 2,
                         borderRadius: 999,
-                        background: isActive ? brand : "transparent",
-                        opacity: isActive ? 0.95 : 0,
-                        transform: isActive ? "scaleX(1)" : "scaleX(0.7)",
+                        background: isActive || gold ? brand : "transparent",
+                        opacity: isActive || gold ? 0.95 : 0,
+                        transform:
+                          isActive || gold ? "scaleX(1)" : "scaleX(0.7)",
                         transition: "opacity 160ms ease, transform 160ms ease",
-                        boxShadow: isActive
-                          ? `0 10px 22px ${brandSoftStrong}`
-                          : "none",
+                        boxShadow:
+                          isActive || gold
+                            ? `0 10px 22px ${brandSoftStrong}`
+                            : "none",
                         pointerEvents: "none",
                       }}
                     />
@@ -521,25 +562,28 @@ export default function Header({ data, styles }) {
                       {moreNav.map((n) => {
                         const id = normalizeId(n.id);
                         const isActive = id && id === activeId;
+                        const gold = isGoldNav(n);
 
                         return (
                           <a
                             key={id}
                             href={`#${id}`}
-                            className="capDropItem"
+                            className={`capDropItem ${
+                              gold ? "capDropItemGold" : ""
+                            }`}
                             role="menuitem"
                             onClick={(e) => {
                               setMoreOpen(false);
                               onNavClick(e, id);
                             }}
                             style={{
-                              ...dropdownItemStyle(isActive),
+                              ...dropdownItemStyle(n, isActive),
                               borderRadius: 12,
                               margin: "2px 0",
                             }}
                           >
                             <span>{n.label}</span>
-                            {isActive && (
+                            {(isActive || gold) && (
                               <span
                                 aria-hidden="true"
                                 style={{

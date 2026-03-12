@@ -1,4 +1,3 @@
-// src/components/Header.js
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
 export default function Header({ data, styles }) {
@@ -173,11 +172,11 @@ export default function Header({ data, styles }) {
       ? `rgba(${brandRgb},0.12)`
       : `rgba(${brandRgb},0.10)`;
 
-  const logoHDesktop = 46;
-  const logoHMobile = 36;
-
-  const innerPadYDesktop = 9;
-  const innerPadYMobile = 7;
+  const logoH = isMobile ? 24 : 46;
+  const innerPadY = isMobile ? 7 : 9;
+  const innerPadX = isMobile
+    ? styles?.padXMobile ?? 16
+    : styles?.padXDesktop ?? 40;
 
   const moreBtnStyle = {
     ...styles.navLink(themeName),
@@ -193,13 +192,15 @@ export default function Header({ data, styles }) {
     userSelect: "none",
     lineHeight: 1.1,
     color: theme.fg,
+    flex: "0 0 auto",
+    minWidth: 0,
   };
 
   const dropdownCardStyle = {
     position: "absolute",
     right: 0,
     top: "calc(100% + 10px)",
-    minWidth: 230,
+    minWidth: 220,
     borderRadius: 18,
     border: `${tok.border.w}px solid ${navWrapBorder}`,
     background:
@@ -214,35 +215,38 @@ export default function Header({ data, styles }) {
     zIndex: 9999,
   };
 
-  const dropdownItemStyle = (_, isActive) => {
-    return {
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      gap: 12,
-      padding: "12px 14px",
-      textDecoration: "none",
-      color: isActive ? brand : theme.fg,
-      fontFamily: styles.fonts?.nav,
-      fontWeight: 700,
-      fontSize: styles.type?.small ?? styles.S,
-      letterSpacing: styles.type?.letter?.menu ?? "0.03em",
-      textTransform: "uppercase",
-      background: isActive
-        ? themeName === "dark"
-          ? `rgba(${brandRgb},0.12)`
-          : `rgba(${brandRgb},0.09)`
-        : "transparent",
-      borderLeft: `${tok.border.w}px solid ${isActive ? brand : "transparent"}`,
-      cursor: "pointer",
-      boxSizing: "border-box",
-    };
-  };
+  const dropdownItemStyle = (_, isActive) => ({
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 12,
+    padding: "12px 14px",
+    textDecoration: "none",
+    color: isActive ? brand : theme.fg,
+    fontFamily: styles.fonts?.nav,
+    fontWeight: 700,
+    fontSize: styles.type?.small ?? styles.S,
+    letterSpacing: styles.type?.letter?.menu ?? "0.03em",
+    textTransform: "uppercase",
+    background: isActive
+      ? themeName === "dark"
+        ? `rgba(${brandRgb},0.12)`
+        : `rgba(${brandRgb},0.09)`
+      : "transparent",
+    borderLeft: `${tok.border.w}px solid ${isActive ? brand : "transparent"}`,
+    cursor: "pointer",
+    boxSizing: "border-box",
+  });
 
   return (
     <header
       style={{
         ...styles.headerStyle(themeName),
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: "100%",
+        zIndex: 3000,
         height: headerH,
         background: headerGlass,
         backdropFilter: "blur(16px)",
@@ -253,19 +257,29 @@ export default function Header({ data, styles }) {
       }}
     >
       <style>{`
+        .capLogo {
+          transition: opacity 170ms ease, transform 170ms ease, filter 170ms ease;
+        }
+
+        .capNavLink {
+          transition: transform 160ms ease, opacity 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+        }
+
+        .capMoreBtn {
+          transition: transform 160ms ease, opacity 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+        }
+
+        .capDropItem {
+          transition: background 160ms ease, color 160ms ease;
+        }
+
         @media (hover:hover) and (pointer:fine) {
-          .capLogo {
-            transition: opacity 170ms ease, transform 170ms ease, filter 170ms ease;
-          }
           .capLogo:hover {
             opacity: 0.96;
             transform: translateY(-1px);
             filter: saturate(1.04);
           }
 
-          .capNavLink {
-            transition: transform 160ms ease, opacity 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
-          }
           .capNavLink:hover {
             transform: translateY(-1px);
             opacity: 1;
@@ -282,32 +296,6 @@ export default function Header({ data, styles }) {
                 ? "rgba(255,255,255,0.055)"
                 : "rgba(0,0,0,0.04)"
             };
-          }
-
-          .capHeaderInner {
-            padding: ${innerPadYDesktop}px ${styles.padXDesktop}px;
-          }
-
-          .capLogoImg {
-            height: ${logoHDesktop}px;
-          }
-
-          .capNavWrap {
-            padding: 6px 10px;
-          }
-
-          @media (max-width: 768px) {
-            .capHeaderInner {
-              padding: ${innerPadYMobile}px ${styles.padXMobile}px;
-            }
-
-            .capLogoImg {
-              height: ${logoHMobile}px;
-            }
-
-            .capNavWrap {
-              padding: 5px 8px;
-            }
           }
         }
       `}</style>
@@ -345,7 +333,6 @@ export default function Header({ data, styles }) {
       />
 
       <div
-        className="capHeaderInner"
         style={{
           ...styles.container,
           position: "relative",
@@ -353,6 +340,7 @@ export default function Header({ data, styles }) {
           display: "flex",
           alignItems: "center",
           boxSizing: "border-box",
+          padding: `${innerPadY}px ${innerPadX}px`,
         }}
       >
         <div
@@ -361,7 +349,7 @@ export default function Header({ data, styles }) {
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
-            gap: 12,
+            gap: isMobile ? 8 : 12,
             minWidth: 0,
           }}
         >
@@ -379,15 +367,16 @@ export default function Header({ data, styles }) {
               padding: "2px 2px",
               flex: "0 0 auto",
               lineHeight: 1,
+              minWidth: 0,
             }}
             aria-label="CAPSTONE Home"
           >
             <img
               src={logoSrc}
               alt={data?.brand?.logoText || "CAPSTONE"}
-              className="capLogoImg"
               style={{
                 width: "auto",
+                height: logoH,
                 display: "block",
                 objectFit: "contain",
                 filter:
@@ -399,11 +388,10 @@ export default function Header({ data, styles }) {
           </a>
 
           <nav
-            className="capNavWrap"
             style={{
               display: "flex",
               alignItems: "center",
-              gap: 8,
+              gap: isMobile ? 6 : 8,
               justifyContent: "flex-end",
               flexWrap: "nowrap",
               overflow: "visible",
@@ -413,7 +401,9 @@ export default function Header({ data, styles }) {
               backdropFilter: "blur(10px)",
               WebkitBackdropFilter: "blur(10px)",
               flex: "0 1 auto",
-              maxWidth: isMobile ? "72vw" : "min(80vw, 900px)",
+              minWidth: 0,
+              maxWidth: isMobile ? "calc(100vw - 132px)" : "min(80vw, 900px)",
+              padding: isMobile ? "5px 8px" : "6px 10px",
               boxShadow:
                 themeName === "dark"
                   ? "inset 0 1px 0 rgba(255,255,255,0.04)"
@@ -446,7 +436,7 @@ export default function Header({ data, styles }) {
                       position: "relative",
                       fontWeight: 700,
                       opacity: isActive ? 1 : 0.92,
-                      padding: isMobile ? "6px 9px" : "7px 11px",
+                      padding: isMobile ? "6px 8px" : "7px 11px",
                       borderRadius: tok.radius.pill,
                       background: isActive ? goldPillBg : "transparent",
                       border: `${tok.border.w}px solid ${
@@ -457,6 +447,10 @@ export default function Header({ data, styles }) {
                       lineHeight: 1.1,
                       textTransform: "uppercase",
                       letterSpacing: styles.type?.letter?.menu ?? "0.04em",
+                      fontSize: isMobile
+                        ? "clamp(11px, 2.8vw, 12px)"
+                        : undefined,
+                      minWidth: 0,
                     }}
                   >
                     {n.label}

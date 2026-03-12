@@ -16,7 +16,6 @@ export default function ValuesWorkSection({
   const bgImage =
     data?.sectionBg?.valuesWork || data?.work?.backgroundImageSrc || "";
 
-  // ✅ 기존보다 조금 더 밝게
   const sectionBg = "#1B2432";
   const textMain = "rgba(255,255,255,0.985)";
   const textSub = "rgba(255,255,255,0.90)";
@@ -31,7 +30,6 @@ export default function ValuesWorkSection({
   const sectionPadY = isMobile ? 46 : 58;
   const innerPad = isMobile ? "16px" : "22px";
 
-  // ✅ 기존 네 OrgSection 제목 크기와 동일
   const sectionTitleSize = isMobile
     ? "clamp(26px, 6.4vw, 34px)"
     : "clamp(34px, 3.35vw, 48px)";
@@ -63,7 +61,6 @@ export default function ValuesWorkSection({
       "linear-gradient(90deg, rgba(199,166,106,0.46) 0%, rgba(255,255,255,0.08) 100%)",
   };
 
-  // ✅ ABOUT US 제거, VALUE&WORK만 유지
   const sectionEyebrow = "VALUE&WORK";
 
   const sectionTitle = data?.work?.title || "주요 업무";
@@ -357,11 +354,11 @@ export default function ValuesWorkSection({
                 className="vwWorkItem"
                 style={{
                   display: "grid",
-                  gridTemplateColumns: isMobile ? "42px 1fr" : "48px 1fr",
-                  gap: isMobile ? 11 : 14,
-                  alignItems: "start",
-                  minHeight: isMobile ? 110 : 160,
-                  padding: isMobile ? "14px 13px" : "20px 18px",
+                  gridTemplateColumns: isMobile ? "46px 1fr" : "48px 1fr",
+                  gap: isMobile ? 12 : 14,
+                  alignItems: "center",
+                  minHeight: isMobile ? 96 : 160,
+                  padding: isMobile ? "13px 13px" : "20px 18px",
                   borderRadius: 18,
                   border: `1px solid ${hairline}`,
                   background: "rgba(255,255,255,0.10)",
@@ -375,12 +372,13 @@ export default function ValuesWorkSection({
                     minWidth: 0,
                     display: "flex",
                     flexDirection: "column",
+                    justifyContent: "center",
                   }}
                 >
                   <div
                     style={{
                       fontWeight: 700,
-                      fontSize: isMobile ? 14 : 15,
+                      fontSize: isMobile ? 15 : 15,
                       lineHeight: 1.34,
                       letterSpacing: "-0.02em",
                       color: gold,
@@ -393,13 +391,12 @@ export default function ValuesWorkSection({
 
                   <div
                     style={{
-                      marginTop: 8,
-                      fontSize: isMobile ? 13.5 : 14.5,
-                      lineHeight: isMobile ? 1.7 : 1.75,
+                      marginTop: isMobile ? 6 : 8,
+                      fontSize: isMobile ? 13 : 14.5,
+                      lineHeight: isMobile ? 1.58 : 1.75,
                       color: textBodyBright,
-                      whiteSpace: "pre-line",
+                      whiteSpace: "normal",
                       wordBreak: "keep-all",
-                      overflowWrap: "anywhere",
                       fontFamily: styles?.fonts?.body,
                       fontWeight: 500,
                     }}

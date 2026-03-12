@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import ImageCard from "../cards/ImageCard";
 import SectionLabel from "../SectionLabel";
 
@@ -57,6 +57,229 @@ function EmptyCard({ styles, theme }) {
   );
 }
 
+function MobileCaseCard({ im, onOpen, styles, theme }) {
+  const t = styles.themes?.[theme] ?? styles.themes.dark;
+  const title = im?.title || im?.label || "상세보기";
+
+  return (
+    <button
+      type="button"
+      onClick={onOpen}
+      style={{
+        border: `1px solid ${t.border}`,
+        background:
+          theme === "dark" ? "rgba(255,255,255,0.05)" : "rgba(0,0,0,0.03)",
+        borderRadius: 16,
+        overflow: "hidden",
+        padding: 0,
+        cursor: "pointer",
+        textAlign: "left",
+        width: "100%",
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        style={{
+          position: "relative",
+          aspectRatio: "1 / 1",
+          background:
+            theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+        }}
+      >
+        {im?.src ? (
+          <img
+            src={im.src}
+            alt={title}
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+          />
+        ) : (
+          <div
+            style={{
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              color: "rgba(255,255,255,0.4)",
+              fontSize: 12,
+              fontWeight: 600,
+            }}
+          >
+            PHOTO
+          </div>
+        )}
+
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            background:
+              "linear-gradient(180deg, rgba(0,0,0,0.06) 40%, rgba(0,0,0,0.72) 100%)",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            left: 10,
+            right: 10,
+            bottom: 10,
+            color: "#fff",
+            fontSize: 12.5,
+            fontWeight: 700,
+            lineHeight: 1.35,
+            letterSpacing: "-0.02em",
+            wordBreak: "keep-all",
+            display: "-webkit-box",
+            WebkitLineClamp: 2,
+            WebkitBoxOrient: "vertical",
+            overflow: "hidden",
+          }}
+        >
+          {title}
+        </div>
+      </div>
+    </button>
+  );
+}
+
+function MobileCaseModal({ im, onClose, styles, theme }) {
+  const t = styles.themes?.[theme] ?? styles.themes.dark;
+  const titleFont =
+    styles?.fonts?.body || styles?.fonts?.display || "GmarketSans, sans-serif";
+  const lines = Array.isArray(im?.lines) ? im.lines.filter(Boolean) : [];
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position: "fixed",
+        inset: 0,
+        zIndex: 99999,
+        background: "rgba(0,0,0,0.72)",
+        backdropFilter: "blur(6px)",
+        WebkitBackdropFilter: "blur(6px)",
+        display: "flex",
+        alignItems: "flex-end",
+        justifyContent: "center",
+        padding: 12,
+        boxSizing: "border-box",
+      }}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          width: "100%",
+          maxWidth: 520,
+          borderRadius: 22,
+          overflow: "hidden",
+          background:
+            theme === "dark" ? "rgba(10,12,18,0.98)" : "rgba(255,255,255,0.98)",
+          border: `1px solid ${t.border}`,
+          boxShadow: "0 24px 80px rgba(0,0,0,0.42)",
+        }}
+      >
+        <div style={{ position: "relative", aspectRatio: "1.3 / 1" }}>
+          {im?.src ? (
+            <img
+              src={im.src}
+              alt={im?.title || ""}
+              style={{
+                position: "absolute",
+                inset: 0,
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          ) : (
+            <div
+              style={{
+                position: "absolute",
+                inset: 0,
+                display: "grid",
+                placeItems: "center",
+                color: "rgba(255,255,255,0.4)",
+              }}
+            >
+              PHOTO
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={onClose}
+            style={{
+              position: "absolute",
+              top: 10,
+              right: 10,
+              width: 36,
+              height: 36,
+              borderRadius: 999,
+              border: "1px solid rgba(255,255,255,0.18)",
+              background: "rgba(0,0,0,0.46)",
+              color: "#fff",
+              fontSize: 20,
+              lineHeight: 1,
+              cursor: "pointer",
+            }}
+          >
+            ×
+          </button>
+        </div>
+
+        <div
+          style={{
+            padding: "18px 16px 20px",
+            color: theme === "dark" ? "#fff" : "#111",
+            fontFamily: titleFont,
+          }}
+        >
+          <div
+            style={{
+              fontSize: 17,
+              fontWeight: 700,
+              lineHeight: 1.35,
+              letterSpacing: "-0.02em",
+              wordBreak: "keep-all",
+            }}
+          >
+            {im?.title || im?.label || "상세보기"}
+          </div>
+
+          {lines.length > 0 && (
+            <div
+              style={{
+                marginTop: 12,
+                display: "grid",
+                gap: 7,
+                fontSize: 13.5,
+                lineHeight: 1.6,
+                color:
+                  theme === "dark"
+                    ? "rgba(255,255,255,0.9)"
+                    : "rgba(17,17,17,0.82)",
+                wordBreak: "keep-all",
+              }}
+            >
+              {lines.map((line, idx) => (
+                <div key={idx}>{line}</div>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function CasesSection({
   data,
   isMobile,
@@ -71,11 +294,22 @@ export default function CasesSection({
   const goldSoft = styles?.brand?.soft || "rgba(199,166,106,0.10)";
 
   const [openMap, setOpenMap] = useState(() => ({}));
+  const [mobileModal, setMobileModal] = useState(null);
+
   const toggleOpen = (bi) =>
     setOpenMap((prev) => ({ ...prev, [bi]: !prev?.[bi] }));
 
   const titleFont =
     styles?.fonts?.body || styles?.fonts?.display || "GmarketSans, sans-serif";
+
+  const normalizedBlocks = useMemo(
+    () =>
+      blocks.map((blk) => ({
+        ...blk,
+        safeImages: ensureSlots(blk?.images, CASE_SLOTS),
+      })),
+    [blocks]
+  );
 
   return (
     <section
@@ -105,8 +339,8 @@ export default function CasesSection({
 
       <div style={styles.container}>
         <div style={{ display: "grid", gap: "clamp(28px, 4vw, 48px)" }}>
-          {blocks.map((blk, bi) => {
-            const imgs = ensureSlots(blk?.images, CASE_SLOTS);
+          {normalizedBlocks.map((blk, bi) => {
+            const imgs = blk.safeImages;
             const eyebrow = blk?.eyebrow || sectionLabel;
 
             const isOpen = !!openMap[bi];
@@ -172,6 +406,14 @@ export default function CasesSection({
                   {visibleImgs.map((im, ii) =>
                     im.__empty ? (
                       <EmptyCard key={ii} styles={styles} theme={theme} />
+                    ) : isMobile ? (
+                      <MobileCaseCard
+                        key={ii}
+                        im={im}
+                        theme={theme}
+                        styles={styles}
+                        onOpen={() => setMobileModal(im)}
+                      />
                     ) : (
                       <ImageCard
                         key={ii}
@@ -216,6 +458,15 @@ export default function CasesSection({
           })}
         </div>
       </div>
+
+      {isMobile && mobileModal && (
+        <MobileCaseModal
+          im={mobileModal}
+          onClose={() => setMobileModal(null)}
+          styles={styles}
+          theme={theme}
+        />
+      )}
     </section>
   );
 }

@@ -35,7 +35,7 @@
       },
       {
         "id": "fields",
-        "label": "Fields"
+        "label": "Portfolio"
       },
       {
         "id": "cases",
@@ -149,7 +149,7 @@
     ]
   },
   "work": {
-    "tagTitle": "Business",
+    "tagTitle": "Portfoli",
     "tagSub": "사업영역",
     "title": "주요 업무",
     "subtitle": "안정된 행사 운영과 효율적인 업무 진행",
@@ -192,7 +192,7 @@
     ]
   },
   "fields": {
-    "tagTitle": "Business",
+    "tagTitle": "Portfolio",
     "tagSub": "사업영역",
     "title": "주요 사업분야",
     "subtitle": "정부, 공공기관, 학술단체 및 민간기업 등이 개최하는 국내/외 행사",
@@ -238,7 +238,7 @@
     ]
   },
   "cases": {
-    "tagTitle": "Business",
+    "tagTitle": "Portfolio",
     "tagSub": "사업영역",
     "sectionLabel": "CASES",
     "blocks": [

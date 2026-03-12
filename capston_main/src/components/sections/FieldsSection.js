@@ -6,6 +6,7 @@ import React, {
   useCallback,
 } from "react";
 import SectionLabel from "../SectionLabel";
+import { normalizeRollingPhotos } from "../../data/siteData";
 
 export default function FieldsSection({
   data,
@@ -14,13 +15,16 @@ export default function FieldsSection({
   theme = "dark",
 }) {
   const fields = data?.fields || {};
-  const photosRaw = fields?.rollingPhotos || [];
+  const photosRaw = useMemo(
+    () => normalizeRollingPhotos(fields?.rollingPhotos),
+    [fields?.rollingPhotos]
+  );
 
   const photosBase = useMemo(
     () =>
-      (Array.isArray(photosRaw) ? photosRaw : []).filter(
-        (p) => p && (p.src || p.label)
-      ),
+      photosRaw.filter((p) => {
+        return p && (p.src || p.label);
+      }),
     [photosRaw]
   );
 
@@ -37,6 +41,7 @@ export default function FieldsSection({
   const subtitleText =
     fields?.subtitle ||
     "정부, 공공기관, 학술단체 및 민간기업 등이 개최하는 국내/외 행사";
+
   const summaryLines =
     Array.isArray(fields?.summaryLines) && fields.summaryLines.length
       ? fields.summaryLines
@@ -68,6 +73,7 @@ export default function FieldsSection({
   const measureBaseWidth = useCallback(() => {
     const el = scrollerRef.current;
     if (!el) return;
+
     const total = el.scrollWidth || 0;
     const baseW = total > 0 ? total / times : 0;
     baseWidthRef.current = baseW;
@@ -120,8 +126,12 @@ export default function FieldsSection({
     const el = scrollerRef.current;
     if (!el) return;
 
-    const pause = () => (pausedRef.current = true);
-    const resume = () => (pausedRef.current = false);
+    const pause = () => {
+      pausedRef.current = true;
+    };
+    const resume = () => {
+      pausedRef.current = false;
+    };
 
     const onPointerDown = () => pause();
     const onPointerUp = () => resume();
@@ -160,13 +170,17 @@ export default function FieldsSection({
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
+
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const apply = () => {
       if (mq.matches) pausedRef.current = true;
     };
+
     apply();
+
     if (mq.addEventListener) mq.addEventListener("change", apply);
     else mq.addListener(apply);
+
     return () => {
       if (mq.removeEventListener) mq.removeEventListener("change", apply);
       else mq.removeListener(apply);
@@ -352,7 +366,8 @@ export default function FieldsSection({
               width: "100%",
               height: 1,
               marginTop: 20,
-              background: `linear-gradient(90deg, rgba(199,166,106,0.40) 0%, rgba(255,255,255,0.03) 100%)`,
+              background:
+                "linear-gradient(90deg, rgba(199,166,106,0.40) 0%, rgba(255,255,255,0.03) 100%)",
             }}
           />
         </div>
@@ -394,7 +409,7 @@ export default function FieldsSection({
                         {ph?.src ? (
                           <img
                             src={ph.src}
-                            alt={ph.label || ""}
+                            alt={ph.alt || ph.label || ""}
                             onLoad={() => setImgLoadedTick((n) => n + 1)}
                             style={{
                               width: "100%",

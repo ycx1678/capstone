@@ -33,8 +33,8 @@ export default function IntroSection({
   const slideIntervalRef = useRef(null);
   const crossfadeTimerRef = useRef(null);
 
-  const logoSrc = "/capstone_logo_remove.png";
-  const logoScale = isMobile ? 1.22 : 1.38;
+  const logoSrc = "/capstone_logo_2.png";
+  const logoScale = isMobile ? 1.02 : 1.12;
   const gold = "#C7A66A";
 
   const introItems = [

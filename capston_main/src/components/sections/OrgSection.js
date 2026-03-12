@@ -29,7 +29,16 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
   );
 
   const lineColor =
-    theme === "dark" ? "rgba(255,255,255,0.28)" : "rgba(0,0,0,0.14)";
+    theme === "dark"
+      ? isMobile
+        ? "rgba(255,255,255,0.42)"
+        : "rgba(255,255,255,0.28)"
+      : isMobile
+      ? "rgba(0,0,0,0.22)"
+      : "rgba(0,0,0,0.14)";
+
+  const lineWidth = isMobile ? 1.8 : 1.2;
+
   const gold = styles?.brand?.base || "#C7A66A";
   const goldSoftStrong =
     styles?.brand?.softStrong || "rgba(199,166,106,0.18)";
@@ -45,7 +54,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
 
   const TEAM_BORDER = "rgba(255,255,255,0.78)";
   const TEAM_TEXT = "rgba(255,255,255,0.94)";
-  const TEAM_BG = "rgba(255,255,255,0.05)";
+  const TEAM_BG = "rgba(34,38,48,0.92)";
 
   const sectionLabel =
     org?.sectionLabel || org?.tagTitle || org?.tagSub || "ABOUT US";
@@ -132,6 +141,8 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
+    position: "relative",
+    zIndex: 2,
   };
 
   const teamRowH = isMobile ? 42 : 48;
@@ -155,13 +166,15 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     WebkitBackdropFilter: "blur(6px)",
     boxSizing: "border-box",
     wordBreak: "keep-all",
+    position: "relative",
+    zIndex: 2,
   };
 
   const chartRef = useRef(null);
   const ceoRef = useRef(null);
   const officeRefs = useRef([]);
   const divisionRefs = useRef([]);
-  const firstTeamRefs = useRef([]);
+  const teamRefs = useRef([]);
 
   const [paths, setPaths] = useState([]);
 
@@ -189,9 +202,11 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
 
   const recompute = () => {
     const ceoB = getAnchor(ceoRef.current, "bottom");
+
     const officeT = officeRefs.current
       .map((el) => getAnchor(el, "top"))
       .filter(Boolean);
+
     const officeB = officeRefs.current
       .map((el) => getAnchor(el, "bottom"))
       .filter(Boolean);
@@ -199,13 +214,24 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     const divT = divisionRefs.current
       .map((el) => getAnchor(el, "top"))
       .filter(Boolean);
+
     const divB = divisionRefs.current
       .map((el) => getAnchor(el, "bottom"))
       .filter(Boolean);
 
-    const teamT = firstTeamRefs.current
-      .map((el) => getAnchor(el, "top"))
-      .filter(Boolean);
+    const teamsByDivision = teamRefs.current.map((arr) =>
+      (arr || [])
+        .map((el) =>
+          el
+            ? {
+                top: getAnchor(el, "top"),
+                bottom: getAnchor(el, "bottom"),
+              }
+            : null
+        )
+        .filter(Boolean)
+        .filter((x) => x.top && x.bottom)
+    );
 
     if (!ceoB || officeT.length < 2 || divT.length < 2) {
       setPaths([]);
@@ -227,18 +253,20 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
       divTopMinY - 10
     );
 
-    const officeLeftX = Math.min(officeT[0].x, officeT[1].x);
-    const officeRightX = Math.max(officeT[0].x, officeT[1].x);
+    const officeLeftX = Math.min(...officeT.map((p) => p.x));
+    const officeRightX = Math.max(...officeT.map((p) => p.x));
 
     const divLeftX = Math.min(...divT.map((p) => p.x));
     const divRightX = Math.max(...divT.map((p) => p.x));
 
     const out = [];
 
+    // CEO -> offices
     out.push(V(ceoB.x, ceoB.y, officeLineY));
     out.push(H(officeLeftX, officeRightX, officeLineY));
     officeT.forEach((p) => out.push(V(p.x, officeLineY, p.y)));
 
+    // offices -> divisions
     if (officeB.length >= 2) {
       const mid = (officeB[0].x + officeB[1].x) / 2;
       out.push(V(mid, officeBottomMaxY, divLineY));
@@ -247,11 +275,28 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     out.push(H(divLeftX, divRightX, divLineY));
     divT.forEach((p) => out.push(V(p.x, divLineY, p.y)));
 
-    for (let i = 0; i < Math.min(divB.length, teamT.length); i++) {
-      const a = { x: divB[i].x, y: divB[i].y };
-      const b = { x: teamT[i].x, y: teamT[i].y };
-      if (Math.abs(a.x - b.x) < 2) out.push(V(a.x, a.y, b.y));
-      else out.push(L(a, b));
+    // division -> first team, and only between team gaps
+    for (let i = 0; i < Math.min(divB.length, teamsByDivision.length); i++) {
+      const teamList = teamsByDivision[i];
+      if (!teamList.length) continue;
+
+      const firstTop = teamList[0].top;
+      const divBottom = divB[i];
+
+      if (Math.abs(divBottom.x - firstTop.x) < 2) {
+        out.push(V(divBottom.x, divBottom.y, firstTop.y));
+      } else {
+        out.push(L({ x: divBottom.x, y: divBottom.y }, firstTop));
+      }
+
+      for (let j = 0; j < teamList.length - 1; j++) {
+        const currBottom = teamList[j].bottom;
+        const nextTop = teamList[j + 1].top;
+
+        if (currBottom && nextTop && nextTop.y > currBottom.y) {
+          out.push(V(currBottom.x, currBottom.y, nextTop.y));
+        }
+      }
     }
 
     setPaths(out);
@@ -264,22 +309,29 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     if (!el) return;
 
     let raf = null;
-    const ro = new ResizeObserver(() => {
-      if (raf) cancelAnimationFrame(raf);
-      raf = requestAnimationFrame(recompute);
-    });
-    ro.observe(el);
+    let t1 = null;
+    let t2 = null;
 
-    const onResize = () => {
+    const run = () => {
       if (raf) cancelAnimationFrame(raf);
       raf = requestAnimationFrame(recompute);
     };
+
+    const ro = new ResizeObserver(() => run());
+    ro.observe(el);
+
+    const onResize = () => run();
     window.addEventListener("resize", onResize);
+
+    t1 = setTimeout(run, 80);
+    t2 = setTimeout(run, 220);
 
     return () => {
       window.removeEventListener("resize", onResize);
       ro.disconnect();
       if (raf) cancelAnimationFrame(raf);
+      if (t1) clearTimeout(t1);
+      if (t2) clearTimeout(t2);
     };
   }, [isMobile, theme, data?.org]);
 
@@ -319,7 +371,9 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
 
       <div style={contentWrap}>
         <div style={{ marginBottom: 6 }}>
-          {showSectionLabel && <SectionLabel text={sectionLabel} styles={styles} />}
+          {showSectionLabel && (
+            <SectionLabel text={sectionLabel} styles={styles} />
+          )}
 
           <div
             style={{
@@ -376,7 +430,17 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
             <svg
               width="100%"
               height="100%"
-              style={{ position: "absolute", inset: 0, pointerEvents: "none" }}
+              viewBox={`0 0 ${chartRef.current?.clientWidth || 1000} ${
+                chartRef.current?.clientHeight || 1000
+              }`}
+              preserveAspectRatio="none"
+              style={{
+                position: "absolute",
+                inset: 0,
+                pointerEvents: "none",
+                overflow: "visible",
+                zIndex: 0,
+              }}
             >
               {paths.map((d, i) => (
                 <path
@@ -384,8 +448,10 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                   d={d}
                   fill="none"
                   stroke={lineColor}
-                  strokeWidth={1.2}
+                  strokeWidth={lineWidth}
                   strokeLinecap="round"
+                  strokeLinejoin="round"
+                  vectorEffect="non-scaling-stroke"
                 />
               ))}
             </svg>
@@ -396,6 +462,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                 maxWidth: isMobile ? "100%" : 760,
                 margin: "0 auto",
                 position: "relative",
+                zIndex: 1,
               }}
             >
               <div ref={ceoRef} style={ceoBox}>
@@ -414,6 +481,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                 gridTemplateColumns: "repeat(2, minmax(0, 1fr))",
                 gap: isMobile ? 12 : 18,
                 position: "relative",
+                zIndex: 1,
               }}
             >
               {offices.map((o, i) => (
@@ -441,6 +509,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                 gap: isMobile ? 12 : 18,
                 alignItems: "start",
                 position: "relative",
+                zIndex: 1,
               }}
             >
               {divisions.map((d, i) => {
@@ -464,11 +533,13 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
                       {Array.from({ length: maxTeams }).map((_, idx) => {
                         const label = teams[idx];
                         const isEmpty = !label;
+
                         return (
                           <div
                             key={idx}
                             ref={(el) => {
-                              if (idx === 0) firstTeamRefs.current[i] = el;
+                              if (!teamRefs.current[i]) teamRefs.current[i] = [];
+                              teamRefs.current[i][idx] = isEmpty ? null : el;
                             }}
                             style={{
                               ...teamBox,

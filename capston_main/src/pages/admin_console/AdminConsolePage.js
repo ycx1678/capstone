@@ -6,7 +6,12 @@ import React, {
   useRef,
   useState,
 } from "react";
-import { loadData, STORAGE_KEY } from "../../data/siteData";
+import {
+  loadData,
+  STORAGE_KEY,
+  FIELDS_ROLLING_SLOTS,
+  normalizeRollingPhotos,
+} from "../../data/siteData";
 
 import ui from "./adminConsoleUI";
 import useIsMobile from "./useIsMobile";
@@ -262,11 +267,16 @@ export default function AdminConsolePage({
     [showToast, updateByPath]
   );
 
-  const rollingPhotos = (data?.fields?.rollingPhotos || []).map((p) => ({
-    ...p,
-    label: p?.label || "",
-    src: p?.src || "",
-  }));
+  const rollingPhotos = useMemo(() => {
+    return normalizeRollingPhotos(data?.fields?.rollingPhotos, FIELDS_ROLLING_SLOTS).map(
+      (p) => ({
+        ...p,
+        label: p?.label || "",
+        src: p?.src || "",
+        alt: p?.alt || "",
+      })
+    );
+  }, [data?.fields?.rollingPhotos]);
 
   const casesBlocks = (data?.cases?.blocks || []).map((b) => ({
     ...b,
@@ -473,8 +483,7 @@ export default function AdminConsolePage({
                   <div style={{ minWidth: 0 }}>
                     <div style={ui.h1}>Capstone Admin</div>
                     <div style={ui.hint}>
-                      이미지/문구 편집 ·{" "}
-                      <span style={ui.monoInline}>#/admin</span>
+                      이미지/문구 편집 · <span style={ui.monoInline}>#/admin</span>
                       <br />
                       저장(대략): JSON <b>{approxJsonSize}</b> / Images{" "}
                       <b>{approxImagesSize}</b>
@@ -1316,12 +1325,13 @@ export default function AdminConsolePage({
                     <AdminCard
                       ui={ui}
                       title="사업분야 롤링 이미지"
-                      sub="fields.rollingPhotos[].src / label 수정 가능"
+                      sub={`fields.rollingPhotos[0..${FIELDS_ROLLING_SLOTS - 1}] / 총 ${FIELDS_ROLLING_SLOTS}개 업로드 가능`}
                     >
                       <div style={ui.grid}>
                         {rollingPhotos.map((p, idx) => {
                           const srcPath = `fields.rollingPhotos[${idx}].src`;
                           const labelPath = `fields.rollingPhotos[${idx}].label`;
+                          const altPath = `fields.rollingPhotos[${idx}].alt`;
                           const bytes = p.src ? estimateDataUrlBytes(p.src) : 0;
 
                           return (
@@ -1346,7 +1356,6 @@ export default function AdminConsolePage({
 
                               <div style={{ marginTop: 10 }}>
                                 <div style={ui.fieldLabel}>제목(label)</div>
-
                                 <input
                                   value={p.label || ""}
                                   onChange={(e) =>
@@ -1354,6 +1363,18 @@ export default function AdminConsolePage({
                                   }
                                   style={ui.input}
                                   placeholder="예: 국제회의 / Exhibition / Conference"
+                                />
+                              </div>
+
+                              <div style={{ marginTop: 10 }}>
+                                <div style={ui.fieldLabel}>대체텍스트(alt)</div>
+                                <input
+                                  value={p.alt || ""}
+                                  onChange={(e) =>
+                                    updateByPath(altPath, e.target.value)
+                                  }
+                                  style={ui.input}
+                                  placeholder={`Rolling image ${idx + 1}`}
                                 />
                               </div>
 

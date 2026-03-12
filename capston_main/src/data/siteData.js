@@ -1,9 +1,49 @@
 // src/data/siteData.js
 import defaultDataJson from "./defaultData.delivery.json";
 
-export const STORAGE_KEY = "capstone_site_data_v4";
+export const STORAGE_KEY = "capstone_site_data_v5";
+export const FIELDS_ROLLING_SLOTS = 22;
 
-export const defaultData = defaultDataJson;
+function createEmptyRollingPhoto() {
+  return {
+    src: "",
+    label: "",
+    alt: "",
+  };
+}
+
+export function normalizeRollingPhotos(list, count = FIELDS_ROLLING_SLOTS) {
+  const safeList = Array.isArray(list) ? list : [];
+
+  return Array.from({ length: count }, (_, idx) => {
+    const item = safeList[idx] || {};
+    return {
+      ...createEmptyRollingPhoto(),
+      ...(item && typeof item === "object" ? item : {}),
+      src: typeof item?.src === "string" ? item.src : "",
+      label: typeof item?.label === "string" ? item.label : "",
+      alt: typeof item?.alt === "string" ? item.alt : "",
+    };
+  });
+}
+
+function normalizeFields(fields) {
+  const safeFields = fields && typeof fields === "object" ? fields : {};
+  return {
+    ...safeFields,
+    rollingPhotos: normalizeRollingPhotos(safeFields.rollingPhotos),
+  };
+}
+
+function normalizeDataShape(data) {
+  const safeData = data && typeof data === "object" ? data : {};
+  return {
+    ...safeData,
+    fields: normalizeFields(safeData.fields),
+  };
+}
+
+export const defaultData = normalizeDataShape(defaultDataJson);
 
 export function deepMerge(base, patch) {
   if (Array.isArray(base)) return Array.isArray(patch) ? patch : base;
@@ -36,22 +76,26 @@ function migrateNav(defaultNav, savedNav) {
 export function loadData() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return defaultData;
+    if (!raw) {
+      return normalizeDataShape(defaultData);
+    }
 
     const saved = JSON.parse(raw);
     const merged = deepMerge(defaultData, saved);
 
     const defaultNav = defaultData?.brand?.nav || [];
     const savedNav = saved?.brand?.nav || merged?.brand?.nav || [];
+
     merged.brand = merged.brand || {};
     merged.brand.nav = migrateNav(defaultNav, savedNav);
 
-    return merged;
+    return normalizeDataShape(merged);
   } catch {
-    return defaultData;
+    return normalizeDataShape(defaultData);
   }
 }
 
 export function saveData(data) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+  const normalized = normalizeDataShape(data);
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
 }

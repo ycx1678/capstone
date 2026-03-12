@@ -12,6 +12,7 @@ import ValuesWorkSection from "./components/sections/ValuesWorkSection";
 import FieldsSection from "./components/sections/FieldsSection";
 import CasesSection from "./components/sections/CasesSection";
 import ContactSection from "./components/sections/ContactSection";
+import Footer from "./components/Footer";
 
 // 네 프로젝트에서 실제 사용하는 관리자 페이지 import 경로로 유지
 // 기존 경로가 맞으면 그대로 두고,
@@ -150,6 +151,8 @@ export default function App() {
           styles={styles}
           theme={themesBySection.contact}
         />
+
+        <Footer isMobile={isMobile} />
       </div>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ImageCard from "../cards/ImageCard";
 import SectionLabel from "../SectionLabel";
 
@@ -60,6 +60,8 @@ function EmptyCard({ styles, theme }) {
 function MobileCaseCard({ im, onOpen, styles, theme }) {
   const t = styles.themes?.[theme] ?? styles.themes.dark;
   const title = im?.title || im?.label || "상세보기";
+  const titleFont =
+    styles?.fonts?.body || styles?.fonts?.display || "GmarketSans, sans-serif";
 
   return (
     <button
@@ -109,6 +111,7 @@ function MobileCaseCard({ im, onOpen, styles, theme }) {
               color: "rgba(255,255,255,0.4)",
               fontSize: 12,
               fontWeight: 600,
+              fontFamily: titleFont,
             }}
           >
             PHOTO
@@ -140,6 +143,7 @@ function MobileCaseCard({ im, onOpen, styles, theme }) {
             WebkitLineClamp: 2,
             WebkitBoxOrient: "vertical",
             overflow: "hidden",
+            fontFamily: titleFont,
           }}
         >
           {title}
@@ -149,11 +153,19 @@ function MobileCaseCard({ im, onOpen, styles, theme }) {
   );
 }
 
-function MobileCaseModal({ im, onClose, styles, theme }) {
+function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
   const t = styles.themes?.[theme] ?? styles.themes.dark;
   const titleFont =
     styles?.fonts?.body || styles?.fonts?.display || "GmarketSans, sans-serif";
   const lines = Array.isArray(im?.lines) ? im.lines.filter(Boolean) : [];
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   return (
     <div
@@ -166,26 +178,63 @@ function MobileCaseModal({ im, onClose, styles, theme }) {
         backdropFilter: "blur(6px)",
         WebkitBackdropFilter: "blur(6px)",
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: wideMode ? "center" : "flex-end",
         justifyContent: "center",
-        padding: 12,
+        padding: wideMode ? 24 : 12,
         boxSizing: "border-box",
       }}
     >
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
+          position: "relative",
           width: "100%",
-          maxWidth: 520,
+          maxWidth: wideMode ? 760 : 520,
+          maxHeight: wideMode ? "min(88vh, 860px)" : "85vh",
           borderRadius: 22,
           overflow: "hidden",
           background:
             theme === "dark" ? "rgba(10,12,18,0.98)" : "rgba(255,255,255,0.98)",
           border: `1px solid ${t.border}`,
           boxShadow: "0 24px 80px rgba(0,0,0,0.42)",
+          display: "flex",
+          flexDirection: "column",
         }}
       >
-        <div style={{ position: "relative", aspectRatio: "1.3 / 1" }}>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="닫기"
+          style={{
+            position: "absolute",
+            top: "max(12px, env(safe-area-inset-top))",
+            right: "max(12px, env(safe-area-inset-right))",
+            width: 40,
+            height: 40,
+            borderRadius: 999,
+            border: "1px solid rgba(255,255,255,0.18)",
+            background: "rgba(0,0,0,0.56)",
+            color: "#fff",
+            fontSize: 22,
+            lineHeight: 1,
+            cursor: "pointer",
+            zIndex: 3,
+            display: "grid",
+            placeItems: "center",
+          }}
+        >
+          ×
+        </button>
+
+        <div
+          style={{
+            position: "relative",
+            aspectRatio: wideMode ? "1.7 / 1" : "1.3 / 1",
+            flexShrink: 0,
+            background:
+              theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
+          }}
+        >
           {im?.src ? (
             <img
               src={im.src}
@@ -212,43 +261,24 @@ function MobileCaseModal({ im, onClose, styles, theme }) {
               PHOTO
             </div>
           )}
-
-          <button
-            type="button"
-            onClick={onClose}
-            style={{
-              position: "absolute",
-              top: 10,
-              right: 10,
-              width: 36,
-              height: 36,
-              borderRadius: 999,
-              border: "1px solid rgba(255,255,255,0.18)",
-              background: "rgba(0,0,0,0.46)",
-              color: "#fff",
-              fontSize: 20,
-              lineHeight: 1,
-              cursor: "pointer",
-            }}
-          >
-            ×
-          </button>
         </div>
 
         <div
           style={{
-            padding: "18px 16px 20px",
+            padding: wideMode ? "22px 20px 24px" : "18px 16px 20px",
             color: theme === "dark" ? "#fff" : "#111",
             fontFamily: titleFont,
+            overflowY: "auto",
           }}
         >
           <div
             style={{
-              fontSize: 17,
+              fontSize: wideMode ? 20 : 17,
               fontWeight: 700,
               lineHeight: 1.35,
               letterSpacing: "-0.02em",
               wordBreak: "keep-all",
+              paddingRight: 44,
             }}
           >
             {im?.title || im?.label || "상세보기"}
@@ -260,8 +290,8 @@ function MobileCaseModal({ im, onClose, styles, theme }) {
                 marginTop: 12,
                 display: "grid",
                 gap: 7,
-                fontSize: 13.5,
-                lineHeight: 1.6,
+                fontSize: wideMode ? 15 : 13.5,
+                lineHeight: 1.65,
                 color:
                   theme === "dark"
                     ? "rgba(255,255,255,0.9)"
@@ -295,12 +325,38 @@ export default function CasesSection({
 
   const [openMap, setOpenMap] = useState(() => ({}));
   const [mobileModal, setMobileModal] = useState(null);
+  const [useTouchLayout, setUseTouchLayout] = useState(isMobile);
+  const [wideTouchModal, setWideTouchModal] = useState(false);
 
   const toggleOpen = (bi) =>
     setOpenMap((prev) => ({ ...prev, [bi]: !prev?.[bi] }));
 
   const titleFont =
     styles?.fonts?.body || styles?.fonts?.display || "GmarketSans, sans-serif";
+
+  useEffect(() => {
+    function syncLayoutMode() {
+      if (typeof window === "undefined") return;
+
+      const width = window.innerWidth;
+      const coarsePointer =
+        typeof window.matchMedia === "function" &&
+        window.matchMedia("(hover: none), (pointer: coarse)").matches;
+
+      const touchLike = isMobile || coarsePointer || width <= 1024;
+      const wideMode = width >= 768;
+
+      setUseTouchLayout(touchLike);
+      setWideTouchModal(touchLike && wideMode);
+    }
+
+    syncLayoutMode();
+    window.addEventListener("resize", syncLayoutMode);
+
+    return () => {
+      window.removeEventListener("resize", syncLayoutMode);
+    };
+  }, [isMobile]);
 
   const normalizedBlocks = useMemo(
     () =>
@@ -344,7 +400,8 @@ export default function CasesSection({
             const eyebrow = blk?.eyebrow || sectionLabel;
 
             const isOpen = !!openMap[bi];
-            const visibleImgs = isMobile && !isOpen ? imgs.slice(0, 4) : imgs;
+            const visibleImgs =
+              useTouchLayout && !isOpen ? imgs.slice(0, 4) : imgs;
 
             return (
               <div
@@ -397,7 +454,7 @@ export default function CasesSection({
                   style={{
                     marginTop: 20,
                     display: "grid",
-                    gridTemplateColumns: isMobile
+                    gridTemplateColumns: useTouchLayout
                       ? "repeat(2, minmax(0, 1fr))"
                       : "repeat(4, minmax(0, 1fr))",
                     gap: "clamp(10px, 2vw, 16px)",
@@ -406,7 +463,7 @@ export default function CasesSection({
                   {visibleImgs.map((im, ii) =>
                     im.__empty ? (
                       <EmptyCard key={ii} styles={styles} theme={theme} />
-                    ) : isMobile ? (
+                    ) : useTouchLayout ? (
                       <MobileCaseCard
                         key={ii}
                         im={im}
@@ -425,7 +482,7 @@ export default function CasesSection({
                   )}
                 </div>
 
-                {isMobile ? (
+                {useTouchLayout ? (
                   <div
                     style={{
                       marginTop: 16,
@@ -459,12 +516,13 @@ export default function CasesSection({
         </div>
       </div>
 
-      {isMobile && mobileModal && (
+      {useTouchLayout && mobileModal && (
         <MobileCaseModal
           im={mobileModal}
           onClose={() => setMobileModal(null)}
           styles={styles}
           theme={theme}
+          wideMode={wideTouchModal}
         />
       )}
     </section>

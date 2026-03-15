@@ -562,24 +562,6 @@ export default function ContactSection({
               </form>
             </div>
           </div>
-
-          <div
-            style={{
-              padding: isMobile ? "14px 16px" : "14px 24px",
-              borderTop: `1px solid ${goldBorder}`,
-              background:
-                theme === "dark"
-                  ? "rgba(255,255,255,0.035)"
-                  : "rgba(11,18,32,0.02)",
-              textAlign: "center",
-              fontSize: styles.S,
-              color: subFg,
-              fontFamily: bodyFont,
-              fontWeight: 500,
-            }}
-          >
-            © {new Date().getFullYear()} {c.companyName || "CAPSTONE"}
-          </div>
         </div>
       </div>
     </section>

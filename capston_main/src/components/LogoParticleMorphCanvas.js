@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useRef } from "react";
 
 const easeInOutCubic = (t) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -56,9 +56,13 @@ export default function LogoParticleMorphCanvas({
   oneShot = true,
   onModeChange,
   onComplete,
+
+  liteMode = false,
 }) {
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
+  const offRef = useRef(null);
+  const offCtxRef = useRef(null);
 
   const stateRef = useRef({
     particles: [],
@@ -74,29 +78,59 @@ export default function LogoParticleMorphCanvas({
     animationStartAt: null,
   });
 
-  const off = useMemo(() => document.createElement("canvas"), []);
-  const offCtx = useMemo(
-    () =>
-      off.getContext("2d", {
+  useEffect(() => {
+    if (!offRef.current) {
+      offRef.current = document.createElement("canvas");
+      offCtxRef.current = offRef.current.getContext("2d", {
         alpha: true,
         willReadFrequently: false,
-      }),
-    [off]
-  );
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
-    if (!canvas) return;
+    const off = offRef.current;
+    const offCtx = offCtxRef.current;
+
+    if (!canvas || !off || !offCtx) return;
 
     const ctx = canvas.getContext("2d", {
       alpha: false,
-      desynchronized: false,
+      desynchronized: true,
       willReadFrequently: false,
     });
-    if (!ctx || !offCtx) return;
+
+    if (!ctx) return;
 
     let raf = 0;
     let ro = null;
+    let resizeHandler = null;
+    let fallbackTimer1 = null;
+    let fallbackTimer2 = null;
+
+    const effectiveDprCap = liteMode ? Math.min(dprCap, 1.5) : dprCap;
+    const effectiveDensity = liteMode
+      ? Math.max(180, Math.round(density * 0.38))
+      : density;
+
+    const effectiveOverlayOversample = liteMode
+      ? Math.min(overlayOversample, 2)
+      : overlayOversample;
+
+    const effectiveOverlayStrength = liteMode
+      ? Math.min(overlayStrength, 0.72)
+      : overlayStrength;
+
+    const effectiveDriftAmp = liteMode ? driftAmp * 0.72 : driftAmp;
+    const effectiveOrbitTilt = liteMode ? orbitTilt * 0.9 : orbitTilt;
+    const effectiveOrbitWobble = liteMode ? orbitWobble * 0.65 : orbitWobble;
+    const effectiveSphereRadiusFactor = liteMode
+      ? sphereRadiusFactor * 0.96
+      : sphereRadiusFactor;
+
+    const effectiveParticleShadowBlur = liteMode ? 2 : 6;
+    const effectiveOverlayShadowBlur = liteMode ? 8 : 16;
 
     const cycleSec = orbitSec + scatterSec + freeSec + gatherSec + holdSec;
 
@@ -126,7 +160,7 @@ export default function LogoParticleMorphCanvas({
       const x = (w - drawW) / 2;
       const y = (h - drawH) / 2 + logoOffsetY + centerOffsetY;
 
-      const oversample = clamp(overlayOversample, 1, 6);
+      const oversample = clamp(effectiveOverlayOversample, 1, 6);
       const offW = Math.max(1, Math.round(drawW * cssDpr * oversample));
       const offH = Math.max(1, Math.round(drawH * cssDpr * oversample));
 
@@ -136,7 +170,7 @@ export default function LogoParticleMorphCanvas({
       offCtx.setTransform(1, 0, 0, 1, 0, 0);
       offCtx.clearRect(0, 0, offW, offH);
       offCtx.imageSmoothingEnabled = true;
-      offCtx.imageSmoothingQuality = "high";
+      offCtx.imageSmoothingQuality = liteMode ? "medium" : "high";
       offCtx.drawImage(img, 0, 0, offW, offH);
 
       return { x, y, w: drawW, h: drawH };
@@ -144,11 +178,11 @@ export default function LogoParticleMorphCanvas({
 
     const reseedParticles = () => {
       const { w, h } = stateRef.current;
-      const sphereR = Math.min(w, h) * sphereRadiusFactor * 0.92;
+      const sphereR = Math.min(w, h) * effectiveSphereRadiusFactor * 0.92;
       stateRef.current.sphereR = sphereR;
 
       const particles = [];
-      for (let i = 0; i < density; i++) {
+      for (let i = 0; i < effectiveDensity; i++) {
         const sp = randomSpherePoint(sphereR);
         particles.push({
           sx: sp.x,
@@ -159,8 +193,8 @@ export default function LogoParticleMorphCanvas({
           tx: w / 2,
           ty: h / 2 + centerOffsetY,
 
-          r: 0.72 + Math.random() * 0.85,
-          a: 0.56 + Math.random() * 0.34,
+          r: liteMode ? 0.8 + Math.random() * 0.72 : 0.72 + Math.random() * 0.85,
+          a: liteMode ? 0.52 + Math.random() * 0.26 : 0.56 + Math.random() * 0.34,
 
           ph: Math.random() * Math.PI * 2,
           spd: 0.7 + Math.random() * 0.9,
@@ -175,8 +209,9 @@ export default function LogoParticleMorphCanvas({
       const w = Math.max(1, Math.round(rect.width));
       const h = Math.max(1, Math.round(rect.height));
 
-      const rawDpr = window.devicePixelRatio || 1;
-      const dpr = Math.max(1, Math.min(dprCap, rawDpr));
+      const rawDpr =
+        typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+      const dpr = Math.max(1, Math.min(effectiveDprCap, rawDpr));
 
       const pixelW = Math.max(1, Math.round(w * dpr));
       const pixelH = Math.max(1, Math.round(h * dpr));
@@ -192,7 +227,7 @@ export default function LogoParticleMorphCanvas({
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
+      ctx.imageSmoothingQuality = liteMode ? "medium" : "high";
 
       stateRef.current.w = w;
       stateRef.current.h = h;
@@ -213,14 +248,14 @@ export default function LogoParticleMorphCanvas({
       let rx = x * ca + z * sa;
       let rz = -x * sa + z * ca;
 
-      const tilt = orbitTilt * 0.65;
+      const tilt = effectiveOrbitTilt * 0.65;
       const ct = Math.cos(tilt);
       const st = Math.sin(tilt);
 
       let ry = y * ct - rz * st;
       rz = y * st + rz * ct;
 
-      const wob = orbitWobble * 0.18 * Math.sin(tt * 0.9);
+      const wob = effectiveOrbitWobble * 0.18 * Math.sin(tt * 0.9);
       ry += wob * 60;
 
       return { x: rx, y: ry, z: rz };
@@ -243,10 +278,12 @@ export default function LogoParticleMorphCanvas({
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, w, h);
 
-      if (!particles.length) return;
+      if (!particles.length || !sphereR) return;
 
       const elapsedSec = (tmsUse - stateRef.current.animationStartAt) * 0.001;
-      const cycleT = oneShot ? Math.min(elapsedSec, cycleSec) : elapsedSec % cycleSec;
+      const cycleT = oneShot
+        ? Math.min(elapsedSec, cycleSec)
+        : elapsedSec % cycleSec;
 
       const tOrbitEnd = orbitSec;
       const tScatterEnd = tOrbitEnd + scatterSec;
@@ -291,12 +328,12 @@ export default function LogoParticleMorphCanvas({
       let overlayAlpha = 0;
       if (overlayRect && imgRef.current) {
         if (mode === "gather") {
-          const revealStart = 0.72;
+          const revealStart = liteMode ? 0.8 : 0.72;
           const k = clamp((gatherP - revealStart) / (1 - revealStart), 0, 1);
           const eased = easeOutCubic(k);
-          overlayAlpha = clamp(overlayStrength * eased, 0, 1);
+          overlayAlpha = clamp(effectiveOverlayStrength * eased, 0, 1);
         } else if (mode === "hold") {
-          overlayAlpha = clamp(Math.max(overlayStrength, 0.98), 0, 1);
+          overlayAlpha = clamp(Math.max(effectiveOverlayStrength, 0.92), 0, 1);
         }
       }
 
@@ -314,14 +351,14 @@ export default function LogoParticleMorphCanvas({
       const allowX = Math.max(1, w / 2 - margin);
       const allowY = Math.max(1, h / 2 - margin);
 
-      const approxMaxX = sphereR * 1.55 + driftAmp * 1.6 + 80;
-      const approxMaxY = sphereR * 1.55 + driftAmp * 1.6 + 90;
+      const approxMaxX = sphereR * 1.55 + effectiveDriftAmp * 1.6 + 80;
+      const approxMaxY = sphereR * 1.55 + effectiveDriftAmp * 1.6 + 90;
 
       const baseSafe = Math.min(1, allowX / approxMaxX, allowY / approxMaxY);
 
       ctx.globalCompositeOperation = "source-over";
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = "high";
+      ctx.imageSmoothingQuality = liteMode ? "medium" : "high";
 
       const tt = elapsedSec;
       const curOrbitSpeed =
@@ -337,12 +374,12 @@ export default function LogoParticleMorphCanvas({
         );
 
         const drift =
-          driftAmp *
+          effectiveDriftAmp *
           (0.8 + d.z * 0.6) *
           Math.sin(d.ph + tt * driftSpeed * d.spd);
 
         const drift2 =
-          driftAmp *
+          effectiveDriftAmp *
           0.75 *
           (0.8 + d.z * 0.6) *
           Math.cos(d.ph * 0.9 + tt * driftSpeed * d.spd);
@@ -377,8 +414,8 @@ export default function LogoParticleMorphCanvas({
 
         const rr = d.r * (0.9 + d.z * 0.28);
 
-        ctx.shadowColor = `rgba(${color},0.34)`;
-        ctx.shadowBlur = 6;
+        ctx.shadowColor = `rgba(${color},${liteMode ? "0.22" : "0.34"})`;
+        ctx.shadowBlur = effectiveParticleShadowBlur;
         ctx.fillStyle = `rgba(${color},${clamp(alpha, 0, 1)})`;
         ctx.beginPath();
         ctx.arc(x, y, rr, 0, Math.PI * 2);
@@ -393,21 +430,37 @@ export default function LogoParticleMorphCanvas({
         ctx.save();
         ctx.globalAlpha = overlayAlpha;
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = "high";
-        ctx.shadowColor = `rgba(${color},0.20)`;
-        ctx.shadowBlur = 16;
+        ctx.imageSmoothingQuality = liteMode ? "medium" : "high";
+        ctx.shadowColor = `rgba(${color},${liteMode ? "0.12" : "0.20"})`;
+        ctx.shadowBlur = effectiveOverlayShadowBlur;
         ctx.drawImage(off, x, y, ow, oh);
         ctx.shadowBlur = 0;
         ctx.restore();
       }
     };
 
-    ro = new ResizeObserver(() => {
-      resize();
-    });
-    ro.observe(canvas);
+    const queueResize = () => {
+      if (raf) cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => {
+        resize();
+        raf = requestAnimationFrame(render);
+      });
+    };
 
     resize();
+
+    if (typeof ResizeObserver !== "undefined") {
+      ro = new ResizeObserver(() => {
+        resize();
+      });
+      ro.observe(canvas);
+    } else {
+      resizeHandler = () => resize();
+      window.addEventListener("resize", resizeHandler);
+    }
+
+    fallbackTimer1 = window.setTimeout(() => resize(), 80);
+    fallbackTimer2 = window.setTimeout(() => resize(), 220);
 
     const img = new Image();
     img.decoding = "async";
@@ -416,8 +469,10 @@ export default function LogoParticleMorphCanvas({
       try {
         if (img.decode) await img.decode();
       } catch (e) {}
+
       imgRef.current = img;
       stateRef.current.overlayRect = buildOverlayRect(img);
+      queueResize();
     };
 
     img.onerror = () => {
@@ -432,6 +487,9 @@ export default function LogoParticleMorphCanvas({
     return () => {
       cancelAnimationFrame(raf);
       if (ro) ro.disconnect();
+      if (resizeHandler) window.removeEventListener("resize", resizeHandler);
+      if (fallbackTimer1) clearTimeout(fallbackTimer1);
+      if (fallbackTimer2) clearTimeout(fallbackTimer2);
     };
   }, [
     src,
@@ -461,8 +519,7 @@ export default function LogoParticleMorphCanvas({
     oneShot,
     onModeChange,
     onComplete,
-    off,
-    offCtx,
+    liteMode,
   ]);
 
   return (

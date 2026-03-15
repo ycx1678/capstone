@@ -17,7 +17,7 @@ export default function Footer({ isMobile }) {
         style={{
           maxWidth: 1280,
           margin: "0 auto",
-          padding: isMobile ? "24px 16px" : "34px 40px",
+          padding: isMobile ? "20px 16px 24px" : "34px 40px",
           display: "flex",
           justifyContent: "center",
         }}
@@ -27,53 +27,53 @@ export default function Footer({ isMobile }) {
             width: "100%",
             maxWidth: 980,
             display: "flex",
-            flexDirection: "row", // 모바일에서도 가로 유지
+            flexDirection: isMobile ? "column" : "row",
             alignItems: "center",
             justifyContent: "center",
-            gap: isMobile ? 18 : 56,
+            gap: isMobile ? 10 : 56,
           }}
         >
-          {/* 로고 영역 */}
-          <div
-            style={{
-              flex: "0 0 auto",
-              width: isMobile ? 110 : 220,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              minHeight: isMobile ? 32 : 48,
-            }}
-          >
-            {
-            <img
-              src="/capstone_logo_2.png"
-              alt="CAPSTONE"
+          {!isMobile && (
+            <div
               style={{
-                width: isMobile ? 100 : 180,
-                height: "auto",
-                objectFit: "contain",
+                flex: "0 0 auto",
+                width: 220,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: 48,
               }}
-            />
-            }
-          </div>
+            >
+              <img
+                src="/capstone_logo_2.png"
+                alt="CAPSTONE"
+                style={{
+                  width: 180,
+                  height: "auto",
+                  objectFit: "contain",
+                  display: "block",
+                }}
+              />
+            </div>
+          )}
 
-          {/* 회사 정보 */}
           <div
             style={{
               flex: "0 1 auto",
-              textAlign: "left",
+              textAlign: isMobile ? "center" : "left",
               color: textColor,
               fontFamily: '"Pretendard","Noto Sans KR",sans-serif',
-              fontSize: isMobile ? 12.8 : 14.5,
-              lineHeight: 1.7,
+              fontSize: isMobile ? 12.2 : 14.5,
+              lineHeight: isMobile ? 1.6 : 1.7,
               letterSpacing: "-0.01em",
+              wordBreak: "keep-all",
             }}
           >
             <div
               style={{
                 color: titleColor,
                 fontWeight: 600,
-                marginBottom: 2,
+                marginBottom: 4,
               }}
             >
               주식회사 캡스톤그룹
@@ -81,9 +81,9 @@ export default function Footer({ isMobile }) {
 
             <div>서울시 서대문구 신촌로 25(창천동, 상록빌딩)</div>
 
-            <div>Tel. 02-6010-8500</div>
+            <div style={{ marginTop: 2 }}>Tel. 02-6010-8500</div>
 
-            <div>
+            <div style={{ marginTop: 2 }}>
               E-mail.{" "}
               <a
                 href="mailto:info@capstone-pco.com"
@@ -96,7 +96,7 @@ export default function Footer({ isMobile }) {
               </a>
             </div>
 
-            <div style={{ marginTop: 4 }}>
+            <div style={{ marginTop: 6 }}>
               Copyright ©CAPSTONE Group. All Rights Reserved.
             </div>
           </div>

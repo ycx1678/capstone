@@ -46,7 +46,10 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
   const goldBorderStrong =
     styles?.brand?.borderStrong || "rgba(199,166,106,0.50)";
 
-  const PRIMARY_BG = "rgba(25,30,48,0.90)";
+  // 상단 3개 박스 컬러 수정
+  // TEAM 박스보다 "조금 더 진한" 차콜 계열로 보정
+  const CEO_BG = "rgba(24, 27, 34, 0.96)";
+  const OFFICE_BG = "rgba(28, 31, 39, 0.94)";
   const PRIMARY_TEXT = "rgba(255,255,255,0.96)";
 
   const DIV_BG = "rgba(255,255,255,0.97)";
@@ -93,7 +96,7 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
   };
 
   const primaryBox = {
-    background: PRIMARY_BG,
+    background: OFFICE_BG,
     color: PRIMARY_TEXT,
     fontWeight: 500,
     fontSize: isMobile ? "14px" : "16px",
@@ -102,9 +105,9 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     padding: isMobile ? "12px 14px" : "16px 18px",
     borderRadius: 14,
     letterSpacing: "-0.02em",
-    border: `1px solid ${goldBorder}`,
+    border: `1px solid rgba(255,255,255,0.16)`,
     boxShadow:
-      "0 12px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.04)",
+      "0 12px 28px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.03)",
     fontFamily: styles?.fonts?.body,
     wordBreak: "keep-all",
     boxSizing: "border-box",
@@ -116,11 +119,13 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
 
   const ceoBox = {
     ...primaryBox,
+    background: CEO_BG,
     fontWeight: 700,
     fontSize: isMobile ? "15px" : "17px",
     minHeight: isMobile ? 52 : 62,
-    border: `1px solid ${goldBorderStrong}`,
-    boxShadow: `0 14px 32px rgba(0,0,0,0.30), 0 0 0 1px rgba(199,166,106,0.08), 0 14px 38px ${goldSoftStrong}`,
+    border: `1px solid rgba(255,255,255,0.20)`,
+    boxShadow:
+      "0 14px 32px rgba(0,0,0,0.30), inset 0 1px 0 rgba(255,255,255,0.04)",
   };
 
   const divisionHeader = {
@@ -261,12 +266,10 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
 
     const out = [];
 
-    // CEO -> offices
     out.push(V(ceoB.x, ceoB.y, officeLineY));
     out.push(H(officeLeftX, officeRightX, officeLineY));
     officeT.forEach((p) => out.push(V(p.x, officeLineY, p.y)));
 
-    // offices -> divisions
     if (officeB.length >= 2) {
       const mid = (officeB[0].x + officeB[1].x) / 2;
       out.push(V(mid, officeBottomMaxY, divLineY));
@@ -275,7 +278,6 @@ export default function OrgSection({ data, isMobile, styles, theme = "dark" }) {
     out.push(H(divLeftX, divRightX, divLineY));
     divT.forEach((p) => out.push(V(p.x, divLineY, p.y)));
 
-    // division -> first team, and only between team gaps
     for (let i = 0; i < Math.min(divB.length, teamsByDivision.length); i++) {
       const teamList = teamsByDivision[i];
       if (!teamList.length) continue;

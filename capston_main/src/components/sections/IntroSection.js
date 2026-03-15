@@ -1,6 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import LogoParticleMorphCanvas from "../LogoParticleMorphCanvas";
 
+function detectAppleMobileSafari() {
+  if (typeof navigator === "undefined") return false;
+
+  const ua = navigator.userAgent || "";
+  const platform = navigator.platform || "";
+
+  const isIOSDevice =
+    /iPad|iPhone|iPod/.test(ua) ||
+    (platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  const isSafari =
+    /Safari/i.test(ua) &&
+    !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(ua);
+
+  return isIOSDevice && isSafari;
+}
+
 export default function IntroSection({
   data,
   isMobile,
@@ -25,6 +42,7 @@ export default function IntroSection({
   const [showBg, setShowBg] = useState(false);
 
   const [bgCrossfade, setBgCrossfade] = useState(false);
+  const [isAppleSafari, setIsAppleSafari] = useState(false);
 
   const firedRef = useRef(false);
   const activeIndexRef = useRef(0);
@@ -71,7 +89,6 @@ export default function IntroSection({
     }
   };
 
-  // 파티클 1회 재생 -> 로고 잠깐 유지 -> 페이드아웃 -> 배경/텍스트 등장
   const onLogoDone = () => {
     if (firedRef.current) return;
     firedRef.current = true;
@@ -84,6 +101,7 @@ export default function IntroSection({
   };
 
   useEffect(() => {
+    setIsAppleSafari(detectAppleMobileSafari());
     return () => clearAllTimers();
   }, []);
 
@@ -106,13 +124,13 @@ export default function IntroSection({
     const img = new Image();
     img.decoding = "async";
     img.src = logoSrc;
-  }, []);
+  }, [logoSrc]);
 
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
 
-    const SLIDE_MS = 7200;
-    const FADE_MS = 2600;
+    const SLIDE_MS = isAppleSafari ? 8200 : 7200;
+    const FADE_MS = isAppleSafari ? 2400 : 3000;
 
     slideIntervalRef.current = setInterval(() => {
       const current = activeIndexRef.current;
@@ -145,7 +163,7 @@ export default function IntroSection({
         crossfadeTimerRef.current = null;
       }
     };
-  }, [showBg, bgImages.length]);
+  }, [showBg, bgImages.length, isAppleSafari]);
 
   const padTop = headerIsFixed ? headerHeight : 0;
   const currentBg = bgImages[activeIndex] || "";
@@ -160,6 +178,28 @@ export default function IntroSection({
 
   const prevMoveClass =
     prevIndex % 3 === 0 ? "pan-a" : prevIndex % 3 === 1 ? "pan-b" : "pan-c";
+
+  const bgWillChange = isAppleSafari ? "opacity, transform" : "opacity, transform, filter";
+  const bgBaseFilter = isAppleSafari
+    ? "saturate(0.96) brightness(0.9)"
+    : "saturate(0.92) brightness(0.82)";
+  const bgPrevFilter = isAppleSafari
+    ? bgCrossfade
+      ? "saturate(1.0) brightness(0.96)"
+      : "saturate(0.96) brightness(0.88)"
+    : bgCrossfade
+    ? "saturate(1.02) brightness(0.98)"
+    : "saturate(0.94) brightness(0.84)";
+  const bgCurrentFilter = isAppleSafari
+    ? bgCrossfade
+      ? "saturate(0.98) brightness(0.9)"
+      : "saturate(1.02) brightness(0.98)"
+    : bgCrossfade
+    ? "saturate(0.96) brightness(0.86)"
+    : "saturate(1.08) brightness(1.04)";
+  const bgTransition = isAppleSafari
+    ? "opacity 1600ms ease-in-out"
+    : "opacity 1850ms ease-in-out, filter 1850ms ease-in-out";
 
   return (
     <section
@@ -182,31 +222,34 @@ export default function IntroSection({
           background-position: center center;
           background-size: cover;
           background-repeat: no-repeat;
-          will-change: opacity, transform;
+          will-change: ${bgWillChange};
           backface-visibility: hidden;
           transform: translate3d(0,0,0) scale(1.08);
+          filter: ${bgBaseFilter};
         }
 
         .introBgPrev {
-          opacity: ${showBg ? (bgCrossfade ? 0.82 : 0) : 0};
-          transition: opacity 2200ms ease-in-out;
+          opacity: ${showBg ? (bgCrossfade ? 0.94 : 0) : 0};
+          transition: ${bgTransition};
+          filter: ${bgPrevFilter};
         }
 
         .introBgCurrent {
-          opacity: ${showBg ? 0.9 : 0};
-          transition: opacity 2200ms ease-in-out;
+          opacity: ${showBg ? 0.98 : 0};
+          transition: ${bgTransition};
+          filter: ${bgCurrentFilter};
         }
 
         .introBgLayer.pan-a {
-          animation: introPanA 9200ms ease-in-out both;
+          animation: introPanA ${isAppleSafari ? "9800ms" : "9200ms"} ease-in-out both;
         }
 
         .introBgLayer.pan-b {
-          animation: introPanB 9200ms ease-in-out both;
+          animation: introPanB ${isAppleSafari ? "9800ms" : "9200ms"} ease-in-out both;
         }
 
         .introBgLayer.pan-c {
-          animation: introPanC 9200ms ease-in-out both;
+          animation: introPanC ${isAppleSafari ? "9800ms" : "9200ms"} ease-in-out both;
         }
 
         @keyframes introPanA {
@@ -243,8 +286,8 @@ export default function IntroSection({
           background:
             linear-gradient(
               90deg,
-              rgba(8,10,15,0.82) 0%,
-              rgba(8,10,15,0.64) 34%,
+              rgba(8,10,15,0.84) 0%,
+              rgba(8,10,15,0.66) 34%,
               rgba(8,10,15,0.34) 68%,
               rgba(8,10,15,0.18) 100%
             );
@@ -259,6 +302,7 @@ export default function IntroSection({
           background:
             radial-gradient(900px 520px at 78% 28%, rgba(199,166,106,0.12), transparent 62%),
             radial-gradient(760px 440px at 18% 72%, rgba(255,255,255,0.05), transparent 66%);
+          opacity: ${isAppleSafari ? 0.7 : 1};
         }
 
         .introCanvasWrap {
@@ -294,7 +338,7 @@ export default function IntroSection({
         .introTextWrap {
           width: ${isMobile ? "100%" : "min(900px, 66vw)"};
           display: grid;
-          gap: ${isMobile ? "8px" : "10px"};
+          gap: ${isMobile ? "9px" : "10px"};
           opacity: 0;
           transform: translateY(24px);
           transition: opacity 900ms ease, transform 900ms ease;
@@ -308,11 +352,11 @@ export default function IntroSection({
         .introTitle {
           margin: 0;
           font-size: ${
-            isMobile ? "clamp(32px, 9vw, 42px)" : "clamp(54px, 5.3vw, 78px)"
+            isMobile ? "clamp(31px, 8.5vw, 40px)" : "clamp(54px, 5.3vw, 78px)"
           };
           font-weight: 700;
           letter-spacing: -0.04em;
-          line-height: 1.03;
+          line-height: ${isMobile ? "1.04" : "1.03"};
           color: #fff;
           word-break: keep-all;
           text-shadow: 0 10px 30px rgba(0,0,0,0.22);
@@ -320,22 +364,22 @@ export default function IntroSection({
 
         .introSub {
           margin: 0;
-          font-size: ${isMobile ? "15px" : "19px"};
+          font-size: ${isMobile ? "14px" : "19px"};
           font-weight: 600;
-          line-height: 1.32;
-          color: rgba(255,255,255,0.9);
-          max-width: 58ch;
+          line-height: ${isMobile ? "1.42" : "1.32"};
+          color: rgba(255,255,255,0.92);
+          max-width: ${isMobile ? "30ch" : "58ch"};
           white-space: pre-line;
           word-break: keep-all;
           text-shadow: 0 8px 24px rgba(0,0,0,0.18);
         }
 
         .introBulletList {
-          margin: ${isMobile ? "6px" : "8px"} 0 0;
+          margin: ${isMobile ? "10px" : "8px"} 0 0;
           padding: 0;
           list-style: none;
           display: grid;
-          gap: ${isMobile ? "10px" : "12px"};
+          gap: ${isMobile ? "12px" : "12px"};
           opacity: 0;
           transform: translateY(16px);
           transition: opacity 700ms ease, transform 700ms ease;
@@ -349,8 +393,8 @@ export default function IntroSection({
 
         .introBulletItem {
           display: grid;
-          grid-template-columns: ${isMobile ? "18px 1fr" : "22px 1fr"};
-          column-gap: 10px;
+          grid-template-columns: ${isMobile ? "16px 1fr" : "22px 1fr"};
+          column-gap: ${isMobile ? "9px" : "10px"};
           align-items: start;
           color: #fff;
           word-break: keep-all;
@@ -358,46 +402,60 @@ export default function IntroSection({
         }
 
         .introBulletDot {
-          width: ${isMobile ? "9px" : "10px"};
-          height: ${isMobile ? "9px" : "10px"};
+          width: ${isMobile ? "7px" : "10px"};
+          height: ${isMobile ? "7px" : "10px"};
           border-radius: 50%;
           background: ${gold};
-          margin-top: ${isMobile ? "9px" : "11px"};
-          box-shadow: 0 0 0 4px rgba(199,166,106,0.15);
+          margin-top: ${isMobile ? "7px" : "11px"};
+          box-shadow: ${
+            isMobile
+              ? "0 0 0 3px rgba(199,166,106,0.16)"
+              : "0 0 0 4px rgba(199,166,106,0.15)"
+          };
           flex: 0 0 auto;
         }
 
         .introBulletContent {
           display: grid;
-          gap: 2px;
+          gap: ${isMobile ? "3px" : "2px"};
+          min-width: 0;
         }
 
         .introBulletHeading {
           display: inline-block;
           color: ${gold};
           font-size: ${
-            isMobile ? "clamp(19px, 5.4vw, 26px)" : "clamp(24px, 2vw, 34px)"
+            isMobile ? "clamp(17px, 4.9vw, 22px)" : "clamp(24px, 2vw, 34px)"
           };
           font-weight: 800;
-          line-height: 1.08;
+          line-height: ${isMobile ? "1.12" : "1.08"};
           letter-spacing: -0.03em;
         }
 
         .introBulletDesc {
           color: rgba(255,255,255,0.96);
-          font-size: ${isMobile ? "14px" : "16px"};
+          font-size: ${isMobile ? "12.5px" : "16px"};
           font-weight: 500;
-          line-height: 1.36;
+          line-height: ${isMobile ? "1.46" : "1.36"};
           margin-top: 0;
+          max-width: ${isMobile ? "30ch" : "unset"};
         }
 
         @media (max-width: 768px) {
           .introGrid {
-            align-items: flex-end;
+            align-items: center;
           }
 
           .introInner {
-            padding-bottom: clamp(60px, 12vh, 110px);
+            width: min(92vw, 560px);
+            padding-top: clamp(72px, 12vh, 110px);
+            padding-bottom: clamp(34px, 7vh, 64px);
+          }
+
+          .introTextWrap {
+            width: 100%;
+            max-width: 100%;
+            gap: 8px;
           }
 
           @keyframes introPanA {
@@ -425,6 +483,18 @@ export default function IntroSection({
             100% {
               transform: translate3d(1.1%, 0.9%, 0) scale(1.14);
             }
+          }
+
+          .introBgGradient {
+            background:
+              linear-gradient(
+                180deg,
+                rgba(8,10,15,0.42) 0%,
+                rgba(8,10,15,0.34) 18%,
+                rgba(8,10,15,0.50) 44%,
+                rgba(8,10,15,0.72) 72%,
+                rgba(8,10,15,0.86) 100%
+              );
           }
         }
       `}</style>
@@ -456,9 +526,9 @@ export default function IntroSection({
             onComplete={onLogoDone}
             centerOffsetY={0}
             logoScale={logoScale}
-            dprCap={isMobile ? 3 : 5}
-            overlayOversample={isMobile ? 2.2 : 3.2}
-            overlayStrength={1}
+            dprCap={isAppleSafari ? 1.5 : isMobile ? 3 : 5}
+            overlayOversample={isAppleSafari ? 1.6 : isMobile ? 2.2 : 3.2}
+            overlayStrength={isAppleSafari ? 0.78 : 1}
             logoFitW={isMobile ? 0.82 : 0.66}
             logoFitH={isMobile ? 0.24 : 0.28}
             orbitSec={1.55}
@@ -467,11 +537,12 @@ export default function IntroSection({
             gatherSec={0.95}
             holdSec={0.72}
             sphereRadiusFactor={0.33}
-            driftAmp={isMobile ? 6 : 8}
+            driftAmp={isAppleSafari ? 4.8 : isMobile ? 6 : 8}
             orbitSpeed={0.16}
             orbitSpeedScatter={0.24}
-            orbitTilt={0.48}
-            orbitWobble={0.1}
+            orbitTilt={isAppleSafari ? 0.38 : 0.48}
+            orbitWobble={isAppleSafari ? 0.06 : 0.1}
+            liteMode={isAppleSafari}
           />
         </div>
       )}

@@ -30,10 +30,9 @@ export default function FieldsSection({
 
   const bgImage = data?.sectionBg?.fields || "";
 
-  const times = 3;
   const photos = useMemo(() => {
     if (!photosBase.length) return [];
-    return Array.from({ length: times }, () => photosBase).flat();
+    return [...photosBase, ...photosBase];
   }, [photosBase]);
 
   const eyebrowText = fields?.tagTitle || "Portfolio";
@@ -59,114 +58,35 @@ export default function FieldsSection({
   const border = "rgba(255,255,255,0.14)";
   const borderHover = "rgba(255,255,255,0.22)";
 
-  const scrollerRef = useRef(null);
-  const rafRef = useRef(0);
+  const trackRef = useRef(null);
+  const firstSetRef = useRef(null);
   const pausedRef = useRef(false);
 
   const speedPxPerSec = isMobile ? 40 : 58;
-  const baseWidthRef = useRef(0);
   const [imgLoadedTick, setImgLoadedTick] = useState(0);
+  const [loopWidth, setLoopWidth] = useState(0);
 
   const cardW = isMobile ? 248 : 304;
   const imgH = isMobile ? 156 : 184;
+  const gapPx = isMobile ? 12 : 16;
 
-  const measureBaseWidth = useCallback(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-
-    const total = el.scrollWidth || 0;
-    const baseW = total > 0 ? total / times : 0;
-    baseWidthRef.current = baseW;
-
-    if (baseW > 0 && el.scrollLeft > baseW) {
-      el.scrollLeft = el.scrollLeft % baseW;
-    }
+  const measureLoopWidth = useCallback(() => {
+    const first = firstSetRef.current;
+    if (!first) return;
+    const width = first.getBoundingClientRect().width || 0;
+    setLoopWidth(width);
   }, []);
 
   useEffect(() => {
-    measureBaseWidth();
-    const onResize = () => measureBaseWidth();
+    measureLoopWidth();
+    const onResize = () => measureLoopWidth();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
-  }, [measureBaseWidth]);
+  }, [measureLoopWidth]);
 
   useEffect(() => {
-    measureBaseWidth();
-  }, [imgLoadedTick, measureBaseWidth, photos.length]);
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el || !photos.length || !photosBase.length) return;
-
-    let last = performance.now();
-
-    const tick = (now) => {
-      if (!el) return;
-
-      const dt = Math.min(48, now - last);
-      last = now;
-
-      if (!pausedRef.current) {
-        el.scrollLeft += (speedPxPerSec * dt) / 1000;
-      }
-
-      const baseW = baseWidthRef.current;
-      if (baseW > 0 && el.scrollLeft >= baseW) {
-        el.scrollLeft -= baseW;
-      }
-
-      rafRef.current = requestAnimationFrame(tick);
-    };
-
-    rafRef.current = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(rafRef.current);
-  }, [photos.length, photosBase.length, speedPxPerSec]);
-
-  useEffect(() => {
-    const el = scrollerRef.current;
-    if (!el) return;
-
-    const pause = () => {
-      pausedRef.current = true;
-    };
-    const resume = () => {
-      pausedRef.current = false;
-    };
-
-    const onPointerDown = () => pause();
-    const onPointerUp = () => resume();
-    const onTouchStart = () => pause();
-    const onTouchEnd = () => resume();
-
-    let wheelTimer = null;
-    const onWheel = () => {
-      pause();
-      if (wheelTimer) clearTimeout(wheelTimer);
-      wheelTimer = setTimeout(() => resume(), 800);
-    };
-
-    el.addEventListener("pointerdown", onPointerDown, { passive: true });
-    window.addEventListener("pointerup", onPointerUp, { passive: true });
-    el.addEventListener("touchstart", onTouchStart, { passive: true });
-    window.addEventListener("touchend", onTouchEnd, { passive: true });
-    el.addEventListener("wheel", onWheel, { passive: true });
-
-    const onEnter = () => pause();
-    const onLeave = () => resume();
-    el.addEventListener("mouseenter", onEnter);
-    el.addEventListener("mouseleave", onLeave);
-
-    return () => {
-      el.removeEventListener("pointerdown", onPointerDown);
-      window.removeEventListener("pointerup", onPointerUp);
-      el.removeEventListener("touchstart", onTouchStart);
-      window.removeEventListener("touchend", onTouchEnd);
-      el.removeEventListener("wheel", onWheel);
-      if (wheelTimer) clearTimeout(wheelTimer);
-      el.removeEventListener("mouseenter", onEnter);
-      el.removeEventListener("mouseleave", onLeave);
-    };
-  }, []);
+    measureLoopWidth();
+  }, [imgLoadedTick, measureLoopWidth, photosBase.length, isMobile]);
 
   useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
@@ -186,6 +106,62 @@ export default function FieldsSection({
       else mq.removeListener(apply);
     };
   }, []);
+
+  const durationSec =
+    loopWidth > 0 ? Math.max(12, loopWidth / speedPxPerSec) : 24;
+
+  const pause = useCallback(() => {
+    pausedRef.current = true;
+    if (trackRef.current) {
+      trackRef.current.style.animationPlayState = "paused";
+    }
+  }, []);
+
+  const resume = useCallback(() => {
+    pausedRef.current = false;
+    if (trackRef.current) {
+      trackRef.current.style.animationPlayState = "running";
+    }
+  }, []);
+
+  useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const onPointerDown = () => pause();
+    const onPointerUp = () => resume();
+    const onTouchStart = () => pause();
+    const onTouchEnd = () => resume();
+
+    let wheelTimer = null;
+    const onWheel = () => {
+      pause();
+      if (wheelTimer) clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(() => resume(), 800);
+    };
+
+    const onEnter = () => pause();
+    const onLeave = () => resume();
+
+    track.addEventListener("pointerdown", onPointerDown, { passive: true });
+    window.addEventListener("pointerup", onPointerUp, { passive: true });
+    track.addEventListener("touchstart", onTouchStart, { passive: true });
+    window.addEventListener("touchend", onTouchEnd, { passive: true });
+    track.addEventListener("wheel", onWheel, { passive: true });
+    track.addEventListener("mouseenter", onEnter);
+    track.addEventListener("mouseleave", onLeave);
+
+    return () => {
+      track.removeEventListener("pointerdown", onPointerDown);
+      window.removeEventListener("pointerup", onPointerUp);
+      track.removeEventListener("touchstart", onTouchStart);
+      window.removeEventListener("touchend", onTouchEnd);
+      track.removeEventListener("wheel", onWheel);
+      if (wheelTimer) clearTimeout(wheelTimer);
+      track.removeEventListener("mouseenter", onEnter);
+      track.removeEventListener("mouseleave", onLeave);
+    };
+  }, [pause, resume]);
 
   return (
     <section
@@ -237,16 +213,9 @@ export default function FieldsSection({
           opacity: 0.98;
         }
 
-        .csbScroller {
-          -ms-overflow-style: none;
-          scrollbar-width: none;
-          overscroll-behavior-x: contain;
-          -webkit-overflow-scrolling: touch;
-        }
-        .csbScroller::-webkit-scrollbar { display:none; }
-
         .csbMask {
           position: relative;
+          overflow: hidden;
         }
 
         .csbMask:before,
@@ -268,6 +237,43 @@ export default function FieldsSection({
         .csbMask:after {
           right: -2px;
           background: linear-gradient(270deg, ${bg} 0%, rgba(0,0,0,0) 100%);
+        }
+
+        .csbViewport {
+          overflow: hidden;
+          width: 100%;
+          padding: 10px 4px;
+        }
+
+        .csbTrack {
+          display: flex;
+          align-items: stretch;
+          gap: ${gapPx}px;
+          width: max-content;
+          will-change: transform;
+          transform: translate3d(0, 0, 0);
+          animation-name: csbMarquee;
+          animation-timing-function: linear;
+          animation-iteration-count: infinite;
+          animation-duration: ${durationSec}s;
+          animation-play-state: running;
+        }
+
+        .csbSet {
+          display: flex;
+          align-items: stretch;
+          gap: ${gapPx}px;
+          width: max-content;
+          flex: 0 0 auto;
+        }
+
+        @keyframes csbMarquee {
+          0% {
+            transform: translate3d(0, 0, 0);
+          }
+          100% {
+            transform: translate3d(calc(-1 * var(--csb-loop-width, 0px)), 0, 0);
+          }
         }
 
         @media (hover:hover) and (pointer:fine) {
@@ -374,106 +380,194 @@ export default function FieldsSection({
 
         <div style={{ marginTop: isMobile ? 20 : 24, position: "relative" }}>
           <div className="csbMask">
-            <div
-              ref={scrollerRef}
-              className="csbScroller"
-              style={{
-                display: "flex",
-                gap: isMobile ? 12 : 16,
-                overflowX: "auto",
-                padding: "10px 4px",
-                scrollBehavior: "auto",
-              }}
-            >
+            <div className="csbViewport">
               {photos.length === 0 ? (
                 <div style={{ height: imgH + 52 }} />
               ) : (
-                photos.map((ph, idx) => (
-                  <div
-                    key={`${ph?.src || ph?.label || "ph"}_${idx}`}
-                    style={{ flex: "0 0 auto", width: cardW }}
-                  >
-                    <div
-                      className="csbCard"
-                      style={{
-                        borderRadius: 20,
-                        overflow: "hidden",
-                        background: "rgba(255,255,255,0.04)",
-                        border: `1px solid ${border}`,
-                        boxShadow: "0 12px 38px rgba(0,0,0,0.58)",
-                        backdropFilter: "blur(8px)",
-                        WebkitBackdropFilter: "blur(8px)",
-                      }}
-                    >
-                      <div style={{ position: "relative" }}>
-                        {ph?.src ? (
-                          <img
-                            src={ph.src}
-                            alt={ph.alt || ph.label || ""}
-                            onLoad={() => setImgLoadedTick((n) => n + 1)}
-                            style={{
-                              width: "100%",
-                              height: imgH,
-                              objectFit: "cover",
-                              display: "block",
-                            }}
-                          />
-                        ) : (
+                <div
+                  ref={trackRef}
+                  className="csbTrack"
+                  style={{
+                    "--csb-loop-width": `${loopWidth}px`,
+                  }}
+                >
+                  <div ref={firstSetRef} className="csbSet">
+                    {photosBase.map((ph, idx) => (
+                      <div
+                        key={`set1_${ph?.src || ph?.label || "ph"}_${idx}`}
+                        style={{ flex: "0 0 auto", width: cardW }}
+                      >
+                        <div
+                          className="csbCard"
+                          style={{
+                            borderRadius: 20,
+                            overflow: "hidden",
+                            background: "rgba(255,255,255,0.04)",
+                            border: `1px solid ${border}`,
+                            boxShadow: "0 12px 38px rgba(0,0,0,0.58)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)",
+                          }}
+                        >
+                          <div style={{ position: "relative" }}>
+                            {ph?.src ? (
+                              <img
+                                src={ph.src}
+                                alt={ph.alt || ph.label || ""}
+                                onLoad={() => setImgLoadedTick((n) => n + 1)}
+                                style={{
+                                  width: "100%",
+                                  height: imgH,
+                                  objectFit: "cover",
+                                  display: "block",
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  height: imgH,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "rgba(255,255,255,0.35)",
+                                  fontWeight: 500,
+                                  letterSpacing: 2,
+                                  fontFamily:
+                                    styles?.fonts?.body ||
+                                    styles?.fonts?.display ||
+                                    "GmarketSans, sans-serif",
+                                }}
+                              >
+                                PHOTO
+                              </div>
+                            )}
+
+                            <div
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                background:
+                                  "linear-gradient(180deg, rgba(0,0,0,0.00) 55%, rgba(0,0,0,0.42) 100%)",
+                                pointerEvents: "none",
+                              }}
+                            />
+                          </div>
+
                           <div
                             style={{
-                              height: imgH,
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              color: "rgba(255,255,255,0.35)",
+                              padding: "12px 12px",
+                              background: "rgba(0,0,0,0.60)",
+                              borderTop: `1px solid ${border}`,
+                              textAlign: "center",
+                              fontSize: isMobile ? 12.8 : 13.8,
                               fontWeight: 500,
-                              letterSpacing: 2,
+                              letterSpacing: "-0.02em",
+                              color: fg,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
+                              fontFamily:
+                                styles?.fonts?.body ||
+                                styles?.fonts?.display ||
+                                "GmarketSans, sans-serif",
+                            }}
+                            title={ph?.label || ""}
+                          >
+                            {ph?.label || ""}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="csbSet" aria-hidden="true">
+                    {photosBase.map((ph, idx) => (
+                      <div
+                        key={`set2_${ph?.src || ph?.label || "ph"}_${idx}`}
+                        style={{ flex: "0 0 auto", width: cardW }}
+                      >
+                        <div
+                          className="csbCard"
+                          style={{
+                            borderRadius: 20,
+                            overflow: "hidden",
+                            background: "rgba(255,255,255,0.04)",
+                            border: `1px solid ${border}`,
+                            boxShadow: "0 12px 38px rgba(0,0,0,0.58)",
+                            backdropFilter: "blur(8px)",
+                            WebkitBackdropFilter: "blur(8px)",
+                          }}
+                        >
+                          <div style={{ position: "relative" }}>
+                            {ph?.src ? (
+                              <img
+                                src={ph.src}
+                                alt=""
+                                onLoad={() => setImgLoadedTick((n) => n + 1)}
+                                style={{
+                                  width: "100%",
+                                  height: imgH,
+                                  objectFit: "cover",
+                                  display: "block",
+                                }}
+                              />
+                            ) : (
+                              <div
+                                style={{
+                                  height: imgH,
+                                  display: "flex",
+                                  alignItems: "center",
+                                  justifyContent: "center",
+                                  color: "rgba(255,255,255,0.35)",
+                                  fontWeight: 500,
+                                  letterSpacing: 2,
+                                  fontFamily:
+                                    styles?.fonts?.body ||
+                                    styles?.fonts?.display ||
+                                    "GmarketSans, sans-serif",
+                                }}
+                              >
+                                PHOTO
+                              </div>
+                            )}
+
+                            <div
+                              style={{
+                                position: "absolute",
+                                inset: 0,
+                                background:
+                                  "linear-gradient(180deg, rgba(0,0,0,0.00) 55%, rgba(0,0,0,0.42) 100%)",
+                                pointerEvents: "none",
+                              }}
+                            />
+                          </div>
+
+                          <div
+                            style={{
+                              padding: "12px 12px",
+                              background: "rgba(0,0,0,0.60)",
+                              borderTop: `1px solid ${border}`,
+                              textAlign: "center",
+                              fontSize: isMobile ? 12.8 : 13.8,
+                              fontWeight: 500,
+                              letterSpacing: "-0.02em",
+                              color: fg,
+                              whiteSpace: "nowrap",
+                              overflow: "hidden",
+                              textOverflow: "ellipsis",
                               fontFamily:
                                 styles?.fonts?.body ||
                                 styles?.fonts?.display ||
                                 "GmarketSans, sans-serif",
                             }}
                           >
-                            PHOTO
+                            {ph?.label || ""}
                           </div>
-                        )}
-
-                        <div
-                          style={{
-                            position: "absolute",
-                            inset: 0,
-                            background:
-                              "linear-gradient(180deg, rgba(0,0,0,0.00) 55%, rgba(0,0,0,0.42) 100%)",
-                            pointerEvents: "none",
-                          }}
-                        />
+                        </div>
                       </div>
-
-                      <div
-                        style={{
-                          padding: "12px 12px",
-                          background: "rgba(0,0,0,0.60)",
-                          borderTop: `1px solid ${border}`,
-                          textAlign: "center",
-                          fontSize: isMobile ? 12.8 : 13.8,
-                          fontWeight: 500,
-                          letterSpacing: "-0.02em",
-                          color: fg,
-                          whiteSpace: "nowrap",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          fontFamily:
-                            styles?.fonts?.body ||
-                            styles?.fonts?.display ||
-                            "GmarketSans, sans-serif",
-                        }}
-                        title={ph?.label || ""}
-                      >
-                        {ph?.label || ""}
-                      </div>
-                    </div>
+                    ))}
                   </div>
-                ))
+                </div>
               )}
             </div>
           </div>

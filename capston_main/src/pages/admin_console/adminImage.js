@@ -129,4 +129,4 @@ export async function uploadImage(file, opts = {}) {
   const url = await uploadToCloudinary(compressed, folder);
 
   return url;
-}
+}n

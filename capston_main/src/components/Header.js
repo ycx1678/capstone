@@ -29,7 +29,7 @@ export default function Header({ data, styles }) {
   const navItems = useMemo(() => data?.brand?.nav || [], [data]);
   const [activeId, setActiveId] = useState("");
 
-  const logoSrc = "/capstone_logo_remove.png";
+  const logoSrc = "/capstone_logo_2.png";
 
   const brand = styles?.brand?.base || "#C7A66A";
   const brandBorder = styles?.brand?.border || "rgba(199,166,106,0.34)";

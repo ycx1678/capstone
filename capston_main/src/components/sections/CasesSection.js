@@ -43,7 +43,7 @@ function EmptyCard({ styles, theme }) {
       }}
     >
       <img
-        src="/capstone_logo_remove.png"
+        src="/capstone_logo_2.png"
         alt="capstone logo"
         style={{
           width: "42%",

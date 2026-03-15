@@ -68,10 +68,10 @@ export default function LogoParticleMorphCanvas({
     lastSizeKey: "",
     overlayRect: null,
     sphereR: 0,
-
     lastMode: "",
     completedOnce: false,
     frozenAt: null,
+    animationStartAt: null,
   });
 
   const off = useMemo(() => document.createElement("canvas"), []);
@@ -164,7 +164,7 @@ export default function LogoParticleMorphCanvas({
 
           ph: Math.random() * Math.PI * 2,
           spd: 0.7 + Math.random() * 0.9,
-          delay: Math.random() * 0.25,
+          delay: Math.random() * 0.16,
         });
       }
       stateRef.current.particles = particles;
@@ -232,6 +232,10 @@ export default function LogoParticleMorphCanvas({
       const { w, h, particles, overlayRect, sphereR } = stateRef.current;
       if (!w || !h) return;
 
+      if (stateRef.current.animationStartAt == null) {
+        stateRef.current.animationStartAt = tms;
+      }
+
       const frozenAt = stateRef.current.frozenAt;
       const tmsUse = frozenAt != null ? frozenAt : tms;
 
@@ -241,7 +245,8 @@ export default function LogoParticleMorphCanvas({
 
       if (!particles.length) return;
 
-      const cycleT = (tmsUse * 0.001) % cycleSec;
+      const elapsedSec = (tmsUse - stateRef.current.animationStartAt) * 0.001;
+      const cycleT = oneShot ? Math.min(elapsedSec, cycleSec) : elapsedSec % cycleSec;
 
       const tOrbitEnd = orbitSec;
       const tScatterEnd = tOrbitEnd + scatterSec;
@@ -268,14 +273,14 @@ export default function LogoParticleMorphCanvas({
 
       const scatterP =
         mode === "scatter"
-          ? (cycleT - tOrbitEnd) / scatterSec
+          ? (cycleT - tOrbitEnd) / Math.max(scatterSec, 0.0001)
           : mode === "free" || mode === "gather" || mode === "hold"
           ? 1
           : 0;
 
       const gatherP =
         mode === "gather"
-          ? (cycleT - tFreeEnd) / gatherSec
+          ? (cycleT - tFreeEnd) / Math.max(gatherSec, 0.0001)
           : mode === "hold"
           ? 1
           : 0;
@@ -283,11 +288,10 @@ export default function LogoParticleMorphCanvas({
       const scatterE = easeInOutCubic(clamp(scatterP, 0, 1));
       const gatherE = easeInOutCubic(clamp(gatherP, 0, 1));
 
-      // ✅ 로고는 gather 마지막 구간에서 자연스럽게 페이드인
       let overlayAlpha = 0;
       if (overlayRect && imgRef.current) {
         if (mode === "gather") {
-          const revealStart = 0.9;
+          const revealStart = 0.72;
           const k = clamp((gatherP - revealStart) / (1 - revealStart), 0, 1);
           const eased = easeOutCubic(k);
           overlayAlpha = clamp(overlayStrength * eased, 0, 1);
@@ -319,7 +323,7 @@ export default function LogoParticleMorphCanvas({
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
-      const tt = tmsUse * 0.001;
+      const tt = elapsedSec;
       const curOrbitSpeed =
         mode === "scatter" || mode === "free" ? orbitSpeedScatter : orbitSpeed;
 

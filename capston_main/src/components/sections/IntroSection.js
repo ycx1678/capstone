@@ -71,16 +71,16 @@ export default function IntroSection({
     }
   };
 
-  // 로고 -> 사라짐 -> 배경 -> 텍스트
+  // 파티클 1회 재생 -> 로고 잠깐 유지 -> 페이드아웃 -> 배경/텍스트 등장
   const onLogoDone = () => {
     if (firedRef.current) return;
     firedRef.current = true;
 
-    timers.current.push(setTimeout(() => setCanvasFade(true), 1100));
-    timers.current.push(setTimeout(() => setShowBg(true), 2050));
-    timers.current.push(setTimeout(() => setShowText(true), 2800));
-    timers.current.push(setTimeout(() => setShowBullets(true), 3150));
-    timers.current.push(setTimeout(() => setCanvasVisible(false), 3300));
+    timers.current.push(setTimeout(() => setCanvasFade(true), 420));
+    timers.current.push(setTimeout(() => setShowBg(true), 760));
+    timers.current.push(setTimeout(() => setShowText(true), 1180));
+    timers.current.push(setTimeout(() => setShowBullets(true), 1440));
+    timers.current.push(setTimeout(() => setCanvasVisible(false), 1650));
   };
 
   useEffect(() => {
@@ -111,7 +111,7 @@ export default function IntroSection({
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
 
-    const SLIDE_MS = 7600;
+    const SLIDE_MS = 7200;
     const FADE_MS = 2600;
 
     slideIntervalRef.current = setInterval(() => {
@@ -151,6 +151,16 @@ export default function IntroSection({
   const currentBg = bgImages[activeIndex] || "";
   const previousBg = bgImages[prevIndex] || currentBg;
 
+  const currentMoveClass =
+    activeIndex % 3 === 0
+      ? "pan-a"
+      : activeIndex % 3 === 1
+      ? "pan-b"
+      : "pan-c";
+
+  const prevMoveClass =
+    prevIndex % 3 === 0 ? "pan-a" : prevIndex % 3 === 1 ? "pan-b" : "pan-c";
+
   return (
     <section
       id="intro"
@@ -174,23 +184,56 @@ export default function IntroSection({
           background-repeat: no-repeat;
           will-change: opacity, transform;
           backface-visibility: hidden;
-          transform: translateZ(0);
+          transform: translate3d(0,0,0) scale(1.08);
         }
 
         .introBgPrev {
-          opacity: ${showBg ? (bgCrossfade ? 0.88 : 0) : 0};
-          transform: scale(${bgCrossfade ? 1.035 : 1.02});
-          transition:
-            opacity 2200ms ease-in-out,
-            transform 2200ms ease-in-out;
+          opacity: ${showBg ? (bgCrossfade ? 0.82 : 0) : 0};
+          transition: opacity 2200ms ease-in-out;
         }
 
         .introBgCurrent {
-          opacity: ${showBg ? 0.88 : 0};
-          transform: scale(${bgCrossfade ? 1.02 : 1.035});
-          transition:
-            opacity 2200ms ease-in-out,
-            transform 2200ms ease-in-out;
+          opacity: ${showBg ? 0.9 : 0};
+          transition: opacity 2200ms ease-in-out;
+        }
+
+        .introBgLayer.pan-a {
+          animation: introPanA 9200ms ease-in-out both;
+        }
+
+        .introBgLayer.pan-b {
+          animation: introPanB 9200ms ease-in-out both;
+        }
+
+        .introBgLayer.pan-c {
+          animation: introPanC 9200ms ease-in-out both;
+        }
+
+        @keyframes introPanA {
+          0% {
+            transform: translate3d(-1.8%, 1.2%, 0) scale(1.08);
+          }
+          100% {
+            transform: translate3d(1.8%, -1.2%, 0) scale(1.16);
+          }
+        }
+
+        @keyframes introPanB {
+          0% {
+            transform: translate3d(2.2%, 0.8%, 0) scale(1.07);
+          }
+          100% {
+            transform: translate3d(-1.4%, -1.6%, 0) scale(1.15);
+          }
+        }
+
+        @keyframes introPanC {
+          0% {
+            transform: translate3d(-1.2%, -1.4%, 0) scale(1.09);
+          }
+          100% {
+            transform: translate3d(1.6%, 1.1%, 0) scale(1.17);
+          }
         }
 
         .introBgGradient {
@@ -200,10 +243,10 @@ export default function IntroSection({
           background:
             linear-gradient(
               90deg,
-              rgba(8,10,15,0.80) 0%,
-              rgba(8,10,15,0.62) 34%,
-              rgba(8,10,15,0.30) 68%,
-              rgba(8,10,15,0.14) 100%
+              rgba(8,10,15,0.82) 0%,
+              rgba(8,10,15,0.64) 34%,
+              rgba(8,10,15,0.34) 68%,
+              rgba(8,10,15,0.18) 100%
             );
           pointer-events: none;
         }
@@ -225,7 +268,7 @@ export default function IntroSection({
           top: ${padTop}px;
           bottom: 0;
           opacity: 1;
-          transition: opacity 900ms ease;
+          transition: opacity 800ms ease;
           z-index: 2;
         }
 
@@ -356,17 +399,44 @@ export default function IntroSection({
           .introInner {
             padding-bottom: clamp(60px, 12vh, 110px);
           }
+
+          @keyframes introPanA {
+            0% {
+              transform: translate3d(-1.2%, 1%, 0) scale(1.08);
+            }
+            100% {
+              transform: translate3d(1.2%, -1%, 0) scale(1.14);
+            }
+          }
+
+          @keyframes introPanB {
+            0% {
+              transform: translate3d(1.4%, 0.6%, 0) scale(1.07);
+            }
+            100% {
+              transform: translate3d(-1%, -1.1%, 0) scale(1.13);
+            }
+          }
+
+          @keyframes introPanC {
+            0% {
+              transform: translate3d(-1%, -1%, 0) scale(1.08);
+            }
+            100% {
+              transform: translate3d(1.1%, 0.9%, 0) scale(1.14);
+            }
+          }
         }
       `}</style>
 
       {bgImages.length > 0 && (
         <>
           <div
-            className="introBgLayer introBgPrev"
+            className={`introBgLayer introBgPrev ${prevMoveClass}`}
             style={{ backgroundImage: `url(${previousBg})` }}
           />
           <div
-            className="introBgLayer introBgCurrent"
+            className={`introBgLayer introBgCurrent ${currentMoveClass}`}
             style={{ backgroundImage: `url(${currentBg})` }}
           />
         </>
@@ -391,6 +461,17 @@ export default function IntroSection({
             overlayStrength={1}
             logoFitW={isMobile ? 0.82 : 0.66}
             logoFitH={isMobile ? 0.24 : 0.28}
+            orbitSec={1.55}
+            scatterSec={0.6}
+            freeSec={0.18}
+            gatherSec={0.95}
+            holdSec={0.72}
+            sphereRadiusFactor={0.33}
+            driftAmp={isMobile ? 6 : 8}
+            orbitSpeed={0.16}
+            orbitSpeedScatter={0.24}
+            orbitTilt={0.48}
+            orbitWobble={0.1}
           />
         </div>
       )}

@@ -9,6 +9,15 @@ function clamp(n, a, b) {
   return Math.max(a, Math.min(b, n));
 }
 
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+
+function ramp01(value, start, end) {
+  if (end <= start) return value >= end ? 1 : 0;
+  return clamp((value - start) / (end - start), 0, 1);
+}
+
 function randomSpherePoint(radius) {
   const u = Math.random();
   const v = Math.random();
@@ -25,7 +34,7 @@ export default function LogoParticleMorphCanvas({
   src,
   bg = "#000",
   color = "199,166,106",
-  density = 1400,
+  density = 1200,
 
   sphereRadiusFactor = 0.42,
   driftAmp = 8,
@@ -48,8 +57,6 @@ export default function LogoParticleMorphCanvas({
   logoScale = 1.18,
 
   overlayStrength = 1.0,
-
-  // 기존 5는 과해서 기본값 낮춤
   dprCap = 2,
   overlayOversample = 2,
 
@@ -133,8 +140,9 @@ export default function LogoParticleMorphCanvas({
     let resizeHandler = null;
 
     const effectiveDprCap = shouldLiteMode ? Math.min(dprCap, 1.5) : dprCap;
+
     const effectiveDensity = shouldLiteMode
-      ? Math.max(180, Math.round(density * 0.42))
+      ? Math.max(220, Math.round(density * 0.42))
       : density;
 
     const effectiveOverlayOversample = shouldLiteMode
@@ -152,7 +160,6 @@ export default function LogoParticleMorphCanvas({
       ? sphereRadiusFactor * 0.96
       : sphereRadiusFactor;
 
-    // 파티클 그림자는 부담이 커서 사실상 제거
     const effectiveParticleShadowBlur = 0;
     const effectiveOverlayShadowBlur = shouldLiteMode ? 6 : 10;
 
@@ -160,6 +167,12 @@ export default function LogoParticleMorphCanvas({
     const overlayShadowColor = `rgba(${color},${shouldLiteMode ? "0.10" : "0.16"})`;
 
     const cycleSec = orbitSec + scatterSec + freeSec + gatherSec + holdSec;
+
+    const tOrbitEnd = orbitSec;
+    const tScatterEnd = tOrbitEnd + scatterSec;
+    const tFreeEnd = tScatterEnd + freeSec;
+    const tGatherEnd = tFreeEnd + gatherSec;
+    const tHoldEnd = tGatherEnd + holdSec;
 
     const buildOverlayRect = (img) => {
       const { w, h, cssDpr } = stateRef.current;
@@ -224,13 +237,16 @@ export default function LogoParticleMorphCanvas({
           r: shouldLiteMode
             ? 0.8 + Math.random() * 0.72
             : 0.72 + Math.random() * 0.85,
+
           a: shouldLiteMode
             ? 0.52 + Math.random() * 0.26
             : 0.56 + Math.random() * 0.34,
 
           ph: Math.random() * Math.PI * 2,
           spd: 0.7 + Math.random() * 0.9,
-          delay: Math.random() * 0.16,
+
+          // gather 시작 타이밍 분산
+          delay: Math.random() * 0.18,
         };
       }
 
@@ -317,6 +333,14 @@ export default function LogoParticleMorphCanvas({
       return { x: rx, y: ry, z: rz };
     };
 
+    const getModeName = (cycleT) => {
+      if (cycleT < tOrbitEnd) return "orbit";
+      if (cycleT < tScatterEnd) return "scatter";
+      if (cycleT < tFreeEnd) return "free";
+      if (cycleT < tGatherEnd) return "gather";
+      return "hold";
+    };
+
     const render = (tms) => {
       rafId = requestAnimationFrame(render);
 
@@ -332,7 +356,6 @@ export default function LogoParticleMorphCanvas({
       const frameDelta = tms - s.lastFrameAt;
       s.lastFrameAt = tms;
 
-      // 탭 전환/복귀 등으로 시간 점프가 생기면 완화
       if (frameDelta > 120) {
         s.animationStartAt += frameDelta - 16.7;
       }
@@ -351,64 +374,51 @@ export default function LogoParticleMorphCanvas({
         ? Math.min(elapsedSec, cycleSec)
         : elapsedSec % cycleSec;
 
-      const tOrbitEnd = orbitSec;
-      const tScatterEnd = tOrbitEnd + scatterSec;
-      const tFreeEnd = tScatterEnd + freeSec;
-      const tGatherEnd = tFreeEnd + gatherSec;
-
-      let mode = "orbit";
-      if (cycleT < tOrbitEnd) mode = "orbit";
-      else if (cycleT < tScatterEnd) mode = "scatter";
-      else if (cycleT < tFreeEnd) mode = "free";
-      else if (cycleT < tGatherEnd) mode = "gather";
-      else mode = "hold";
-
-      if (s.lastMode !== mode) {
-        s.lastMode = mode;
-        if (typeof onModeChange === "function") onModeChange(mode);
+      const modeName = getModeName(cycleT);
+      if (s.lastMode !== modeName) {
+        s.lastMode = modeName;
+        if (typeof onModeChange === "function") onModeChange(modeName);
       }
 
-      if (oneShot && mode === "hold" && !s.completedOnce) {
+      if (oneShot && elapsedSec >= tHoldEnd && !s.completedOnce) {
         s.completedOnce = true;
         s.frozenAt = tms;
         if (typeof onComplete === "function") onComplete();
       }
 
-      const scatterP =
-        mode === "scatter"
-          ? (cycleT - tOrbitEnd) / Math.max(scatterSec, 0.0001)
-          : mode === "free" || mode === "gather" || mode === "hold"
-          ? 1
-          : 0;
+      // ---- 핵심: discrete mode 대신 continuous amount 사용 ----
+      const scatterAmt = easeInOutCubic(ramp01(cycleT, tOrbitEnd, tScatterEnd));
+      const freeAmt = easeInOutCubic(ramp01(cycleT, tScatterEnd, tFreeEnd));
+      const gatherAmt = easeInOutCubic(ramp01(cycleT, tFreeEnd, tGatherEnd));
+      const holdAmt = easeInOutCubic(ramp01(cycleT, tGatherEnd, tHoldEnd));
 
-      const gatherP =
-        mode === "gather"
-          ? (cycleT - tFreeEnd) / Math.max(gatherSec, 0.0001)
-          : mode === "hold"
-          ? 1
-          : 0;
+      // scatter 이후 회전이 빨라지고, gather 들어가면 다시 자연스럽게 낮아짐
+      const orbitBlend = scatterAmt * (1 - gatherAmt * 0.9);
+      const curOrbitSpeed = lerp(orbitSpeed, orbitSpeedScatter, orbitBlend);
 
-      const scatterE = easeInOutCubic(clamp(scatterP, 0, 1));
-      const gatherE = easeInOutCubic(clamp(gatherP, 0, 1));
+      // 바깥으로 퍼지는 정도도 gather 들어가면 자연스럽게 사라짐
+      const scatterPush = scatterAmt * (1 - gatherAmt);
 
       let overlayAlpha = 0;
       if (overlayRect && imgRef.current) {
-        if (mode === "gather") {
-          const revealStart = shouldLiteMode ? 0.8 : 0.72;
-          const k = clamp((gatherP - revealStart) / (1 - revealStart), 0, 1);
-          const eased = easeOutCubic(k);
-          overlayAlpha = clamp(effectiveOverlayStrength * eased, 0, 1);
-        } else if (mode === "hold") {
-          overlayAlpha = clamp(Math.max(effectiveOverlayStrength, 0.92), 0, 1);
-        }
+        const revealStart = shouldLiteMode ? 0.82 : 0.72;
+        const revealP = clamp((gatherAmt - revealStart) / (1 - revealStart), 0, 1);
+        const revealE = easeOutCubic(revealP);
+        overlayAlpha = clamp(
+          lerp(0, effectiveOverlayStrength, revealE) * (1 - holdAmt) +
+            Math.max(effectiveOverlayStrength, 0.92) * holdAmt,
+          0,
+          1
+        );
       }
 
+      // 파티클도 hold 직전에 딱 끄지 말고 연속적으로 감쇠
+      const particleFadeBase = 1 - holdAmt;
       const particleFade =
-        mode === "hold"
-          ? 0
-          : mode === "gather"
+        particleFadeBase *
+        (gatherAmt > 0
           ? clamp(1 - overlayAlpha * 1.08, 0, 1)
-          : 1;
+          : 1);
 
       const cx = w / 2;
       const cy = h / 2 + centerOffsetY;
@@ -419,7 +429,6 @@ export default function LogoParticleMorphCanvas({
 
       const approxMaxX = sphereR * 1.55 + effectiveDriftAmp * 1.6 + 80;
       const approxMaxY = sphereR * 1.55 + effectiveDriftAmp * 1.6 + 90;
-
       const baseSafe = Math.min(1, allowX / approxMaxX, allowY / approxMaxY);
 
       ctx.globalCompositeOperation = "source-over";
@@ -427,8 +436,6 @@ export default function LogoParticleMorphCanvas({
       ctx.imageSmoothingQuality = shouldLiteMode ? "medium" : "high";
 
       const tt = elapsedSec;
-      const curOrbitSpeed =
-        mode === "scatter" || mode === "free" ? orbitSpeedScatter : orbitSpeed;
 
       ctx.shadowColor = particleShadowColor;
       ctx.shadowBlur = effectiveParticleShadowBlur;
@@ -460,24 +467,18 @@ export default function LogoParticleMorphCanvas({
         const dx = sx - cx;
         const dy = sy - cy;
 
-        const desiredPush = mode === "orbit" ? 1 : 1 + 0.3 * scatterE;
+        const desiredPush = 1 + 0.3 * scatterPush;
         const safePush = Math.min(desiredPush, baseSafe);
 
         sx = cx + dx * safePush;
         sy = cy + dy * safePush;
 
-        let x = sx;
-        let y = sy;
+        // gather도 branch snap 없이 항상 계산
+        const gatherShift = clamp((gatherAmt - d.delay) / (1 - d.delay), 0, 1);
+        const gatherMix = easeInOutCubic(gatherShift);
 
-        if (mode === "gather") {
-          const pe = clamp((gatherE - d.delay) / (1 - d.delay), 0, 1);
-          const mix = easeInOutCubic(pe);
-          x = sx + (d.tx - sx) * mix;
-          y = sy + (d.ty - sy) * mix;
-        } else if (mode === "hold") {
-          x = d.tx;
-          y = d.ty;
-        }
+        const x = lerp(sx, d.tx, gatherMix);
+        const y = lerp(sy, d.ty, gatherMix);
 
         const alpha = d.a * particleFade;
         if (alpha <= 0.002) continue;

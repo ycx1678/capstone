@@ -49,7 +49,7 @@ export default function LogoParticleMorphCanvas({
 
   overlayStrength = 1.0,
 
-  // 핵심: 과한 DPR 제한
+  // 기존 5는 과해서 기본값 낮춤
   dprCap = 2,
   overlayOversample = 2,
 
@@ -123,7 +123,6 @@ export default function LogoParticleMorphCanvas({
 
     const ctx = canvas.getContext("2d", {
       alpha: false,
-      // 브라우저에 따라 true가 더 불안정할 수 있어 제거
       willReadFrequently: false,
     });
 
@@ -132,8 +131,6 @@ export default function LogoParticleMorphCanvas({
     let rafId = 0;
     let ro = null;
     let resizeHandler = null;
-    let fallbackTimer1 = null;
-    let fallbackTimer2 = null;
 
     const effectiveDprCap = shouldLiteMode ? Math.min(dprCap, 1.5) : dprCap;
     const effectiveDensity = shouldLiteMode
@@ -155,14 +152,14 @@ export default function LogoParticleMorphCanvas({
       ? sphereRadiusFactor * 0.96
       : sphereRadiusFactor;
 
-    // 파티클 그림자는 끄거나 매우 약하게
+    // 파티클 그림자는 부담이 커서 사실상 제거
     const effectiveParticleShadowBlur = 0;
     const effectiveOverlayShadowBlur = shouldLiteMode ? 6 : 10;
 
-    const cycleSec = orbitSec + scatterSec + freeSec + gatherSec + holdSec;
-
     const particleShadowColor = `rgba(${color},${shouldLiteMode ? "0.18" : "0.24"})`;
     const overlayShadowColor = `rgba(${color},${shouldLiteMode ? "0.10" : "0.16"})`;
+
+    const cycleSec = orbitSec + scatterSec + freeSec + gatherSec + holdSec;
 
     const buildOverlayRect = (img) => {
       const { w, h, cssDpr } = stateRef.current;
@@ -212,6 +209,7 @@ export default function LogoParticleMorphCanvas({
       stateRef.current.sphereR = sphereR;
 
       const particles = new Array(effectiveDensity);
+
       for (let i = 0; i < effectiveDensity; i++) {
         const sp = randomSpherePoint(sphereR);
         particles[i] = {
@@ -223,14 +221,19 @@ export default function LogoParticleMorphCanvas({
           tx: w / 2,
           ty: h / 2 + centerOffsetY,
 
-          r: shouldLiteMode ? 0.8 + Math.random() * 0.72 : 0.72 + Math.random() * 0.85,
-          a: shouldLiteMode ? 0.52 + Math.random() * 0.26 : 0.56 + Math.random() * 0.34,
+          r: shouldLiteMode
+            ? 0.8 + Math.random() * 0.72
+            : 0.72 + Math.random() * 0.85,
+          a: shouldLiteMode
+            ? 0.52 + Math.random() * 0.26
+            : 0.56 + Math.random() * 0.34,
 
           ph: Math.random() * Math.PI * 2,
           spd: 0.7 + Math.random() * 0.9,
           delay: Math.random() * 0.16,
         };
       }
+
       stateRef.current.particles = particles;
     };
 
@@ -250,6 +253,10 @@ export default function LogoParticleMorphCanvas({
       if (stateRef.current.lastSizeKey === sizeKey) return;
       stateRef.current.lastSizeKey = sizeKey;
 
+      const prevW = stateRef.current.w;
+      const prevH = stateRef.current.h;
+      const prevDpr = stateRef.current.cssDpr;
+
       canvas.width = pixelW;
       canvas.height = pixelH;
       canvas.style.width = `${w}px`;
@@ -263,7 +270,16 @@ export default function LogoParticleMorphCanvas({
       stateRef.current.h = h;
       stateRef.current.cssDpr = dpr;
 
-      reseedParticles();
+      const sizeChangedEnough =
+        !prevW ||
+        !prevH ||
+        Math.abs(prevW - w) > 8 ||
+        Math.abs(prevH - h) > 8 ||
+        Math.abs(prevDpr - dpr) > 0.2;
+
+      if (sizeChangedEnough) {
+        reseedParticles();
+      }
 
       if (imgRef.current) {
         stateRef.current.overlayRect = buildOverlayRect(imgRef.current);
@@ -273,6 +289,7 @@ export default function LogoParticleMorphCanvas({
     const queueResize = () => {
       if (stateRef.current.resizeQueued) return;
       stateRef.current.resizeQueued = true;
+
       requestAnimationFrame(() => {
         stateRef.current.resizeQueued = false;
         resize();
@@ -312,9 +329,10 @@ export default function LogoParticleMorphCanvas({
         s.lastFrameAt = tms;
       }
 
-      // 탭 복귀/프리즈 후 시간 급점프 완화
       const frameDelta = tms - s.lastFrameAt;
       s.lastFrameAt = tms;
+
+      // 탭 전환/복귀 등으로 시간 점프가 생기면 완화
       if (frameDelta > 120) {
         s.animationStartAt += frameDelta - 16.7;
       }
@@ -412,7 +430,6 @@ export default function LogoParticleMorphCanvas({
       const curOrbitSpeed =
         mode === "scatter" || mode === "free" ? orbitSpeedScatter : orbitSpeed;
 
-      // shadow 상태는 루프 밖에서 한 번만
       ctx.shadowColor = particleShadowColor;
       ctx.shadowBlur = effectiveParticleShadowBlur;
 
@@ -502,9 +519,6 @@ export default function LogoParticleMorphCanvas({
       window.addEventListener("resize", resizeHandler);
     }
 
-    fallbackTimer1 = window.setTimeout(() => queueResize(), 80);
-    fallbackTimer2 = window.setTimeout(() => queueResize(), 220);
-
     const img = new Image();
     img.decoding = "async";
 
@@ -515,7 +529,6 @@ export default function LogoParticleMorphCanvas({
 
       imgRef.current = img;
       stateRef.current.overlayRect = buildOverlayRect(img);
-      queueResize();
     };
 
     img.onerror = () => {
@@ -531,8 +544,6 @@ export default function LogoParticleMorphCanvas({
       cancelAnimationFrame(rafId);
       if (ro) ro.disconnect();
       if (resizeHandler) window.removeEventListener("resize", resizeHandler);
-      if (fallbackTimer1) clearTimeout(fallbackTimer1);
-      if (fallbackTimer2) clearTimeout(fallbackTimer2);
     };
   }, [
     src,

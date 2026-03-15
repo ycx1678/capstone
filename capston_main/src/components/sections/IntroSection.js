@@ -150,7 +150,7 @@ export default function IntroSection({
     const img = new Image();
     img.decoding = "async";
     img.src = logoSrc;
-  }, []);
+  }, [logoSrc]);
 
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
@@ -425,12 +425,23 @@ export default function IntroSection({
         }
 
         .introBulletDesc {
+          position: relative;
           color: rgba(255,255,255,0.96);
           font-size: ${isMobile ? "12.5px" : "16px"};
           font-weight: 500;
           line-height: ${isMobile ? "1.46" : "1.36"};
           margin-top: 0;
           max-width: ${isMobile ? "30ch" : "unset"};
+          padding-left: ${isMobile ? "12px" : "14px"};
+          word-break: keep-all;
+        }
+
+        .introBulletDesc::before {
+          content: "-";
+          position: absolute;
+          left: 0;
+          top: 0;
+          color: rgba(255,255,255,0.96);
         }
 
         @media (max-width: 768px) {
@@ -554,6 +565,7 @@ export default function IntroSection({
             orbitSpeedScatter={0.24}
             orbitTilt={0.4}
             orbitWobble={0.06}
+            liteMode={forceLiteMode}
           />
         </div>
       )}
@@ -574,7 +586,7 @@ export default function IntroSection({
                   <span className="introBulletDot" />
                   <div className="introBulletContent">
                     <span className="introBulletHeading">{item.title}</span>
-                    <span className="introBulletDesc">- {item.desc}</span>
+                    <span className="introBulletDesc">{item.desc}</span>
                   </div>
                 </li>
               ))}

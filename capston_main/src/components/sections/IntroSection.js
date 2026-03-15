@@ -1,23 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import LogoParticleMorphCanvas from "../LogoParticleMorphCanvas";
 
-function detectAppleMobileSafari() {
-  if (typeof navigator === "undefined") return false;
-
-  const ua = navigator.userAgent || "";
-  const platform = navigator.platform || "";
-
-  const isIOSDevice =
-    /iPad|iPhone|iPod/.test(ua) ||
-    (platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-  const isSafari =
-    /Safari/i.test(ua) &&
-    !/CriOS|FxiOS|EdgiOS|OPiOS|YaBrowser/i.test(ua);
-
-  return isIOSDevice && isSafari;
-}
-
 export default function IntroSection({
   data,
   isMobile,
@@ -42,7 +25,6 @@ export default function IntroSection({
   const [showBg, setShowBg] = useState(false);
 
   const [bgCrossfade, setBgCrossfade] = useState(false);
-  const [isAppleSafari, setIsAppleSafari] = useState(false);
 
   const firedRef = useRef(false);
   const activeIndexRef = useRef(0);
@@ -101,7 +83,6 @@ export default function IntroSection({
   };
 
   useEffect(() => {
-    setIsAppleSafari(detectAppleMobileSafari());
     return () => clearAllTimers();
   }, []);
 
@@ -129,8 +110,8 @@ export default function IntroSection({
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
 
-    const SLIDE_MS = isAppleSafari ? 8200 : 7200;
-    const FADE_MS = isAppleSafari ? 2400 : 3000;
+    const SLIDE_MS = 7200;
+    const FADE_MS = 3000;
 
     slideIntervalRef.current = setInterval(() => {
       const current = activeIndexRef.current;
@@ -163,7 +144,7 @@ export default function IntroSection({
         crossfadeTimerRef.current = null;
       }
     };
-  }, [showBg, bgImages.length, isAppleSafari]);
+  }, [showBg, bgImages.length]);
 
   const padTop = headerIsFixed ? headerHeight : 0;
   const currentBg = bgImages[activeIndex] || "";
@@ -178,28 +159,6 @@ export default function IntroSection({
 
   const prevMoveClass =
     prevIndex % 3 === 0 ? "pan-a" : prevIndex % 3 === 1 ? "pan-b" : "pan-c";
-
-  const bgWillChange = isAppleSafari ? "opacity, transform" : "opacity, transform, filter";
-  const bgBaseFilter = isAppleSafari
-    ? "saturate(0.96) brightness(0.9)"
-    : "saturate(0.92) brightness(0.82)";
-  const bgPrevFilter = isAppleSafari
-    ? bgCrossfade
-      ? "saturate(1.0) brightness(0.96)"
-      : "saturate(0.96) brightness(0.88)"
-    : bgCrossfade
-    ? "saturate(1.02) brightness(0.98)"
-    : "saturate(0.94) brightness(0.84)";
-  const bgCurrentFilter = isAppleSafari
-    ? bgCrossfade
-      ? "saturate(0.98) brightness(0.9)"
-      : "saturate(1.02) brightness(0.98)"
-    : bgCrossfade
-    ? "saturate(0.96) brightness(0.86)"
-    : "saturate(1.08) brightness(1.04)";
-  const bgTransition = isAppleSafari
-    ? "opacity 1600ms ease-in-out"
-    : "opacity 1850ms ease-in-out, filter 1850ms ease-in-out";
 
   return (
     <section
@@ -222,34 +181,46 @@ export default function IntroSection({
           background-position: center center;
           background-size: cover;
           background-repeat: no-repeat;
-          will-change: ${bgWillChange};
+          will-change: opacity, transform, filter;
           backface-visibility: hidden;
           transform: translate3d(0,0,0) scale(1.08);
-          filter: ${bgBaseFilter};
+          filter: saturate(0.92) brightness(0.82);
         }
 
         .introBgPrev {
           opacity: ${showBg ? (bgCrossfade ? 0.94 : 0) : 0};
-          transition: ${bgTransition};
-          filter: ${bgPrevFilter};
+          transition:
+            opacity 1850ms ease-in-out,
+            filter 1850ms ease-in-out;
+          filter: ${
+            bgCrossfade
+              ? "saturate(1.02) brightness(0.98)"
+              : "saturate(0.94) brightness(0.84)"
+          };
         }
 
         .introBgCurrent {
           opacity: ${showBg ? 0.98 : 0};
-          transition: ${bgTransition};
-          filter: ${bgCurrentFilter};
+          transition:
+            opacity 1850ms ease-in-out,
+            filter 1850ms ease-in-out;
+          filter: ${
+            bgCrossfade
+              ? "saturate(0.96) brightness(0.86)"
+              : "saturate(1.08) brightness(1.04)"
+          };
         }
 
         .introBgLayer.pan-a {
-          animation: introPanA ${isAppleSafari ? "9800ms" : "9200ms"} ease-in-out both;
+          animation: introPanA 9200ms ease-in-out both;
         }
 
         .introBgLayer.pan-b {
-          animation: introPanB ${isAppleSafari ? "9800ms" : "9200ms"} ease-in-out both;
+          animation: introPanB 9200ms ease-in-out both;
         }
 
         .introBgLayer.pan-c {
-          animation: introPanC ${isAppleSafari ? "9800ms" : "9200ms"} ease-in-out both;
+          animation: introPanC 9200ms ease-in-out both;
         }
 
         @keyframes introPanA {
@@ -302,7 +273,6 @@ export default function IntroSection({
           background:
             radial-gradient(900px 520px at 78% 28%, rgba(199,166,106,0.12), transparent 62%),
             radial-gradient(760px 440px at 18% 72%, rgba(255,255,255,0.05), transparent 66%);
-          opacity: ${isAppleSafari ? 0.7 : 1};
         }
 
         .introCanvasWrap {
@@ -526,9 +496,9 @@ export default function IntroSection({
             onComplete={onLogoDone}
             centerOffsetY={0}
             logoScale={logoScale}
-            dprCap={isAppleSafari ? 1.5 : isMobile ? 3 : 5}
-            overlayOversample={isAppleSafari ? 1.6 : isMobile ? 2.2 : 3.2}
-            overlayStrength={isAppleSafari ? 0.78 : 1}
+            dprCap={isMobile ? 2 : 2.5}
+            overlayOversample={isMobile ? 1.6 : 2}
+            overlayStrength={0.82}
             logoFitW={isMobile ? 0.82 : 0.66}
             logoFitH={isMobile ? 0.24 : 0.28}
             orbitSec={1.55}
@@ -537,12 +507,12 @@ export default function IntroSection({
             gatherSec={0.95}
             holdSec={0.72}
             sphereRadiusFactor={0.33}
-            driftAmp={isAppleSafari ? 4.8 : isMobile ? 6 : 8}
+            driftAmp={isMobile ? 4.8 : 6}
             orbitSpeed={0.16}
             orbitSpeedScatter={0.24}
-            orbitTilt={isAppleSafari ? 0.38 : 0.48}
-            orbitWobble={isAppleSafari ? 0.06 : 0.1}
-            liteMode={isAppleSafari}
+            orbitTilt={0.4}
+            orbitWobble={0.06}
+            liteMode={true}
           />
         </div>
       )}

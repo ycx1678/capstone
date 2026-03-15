@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useMemo, useRef } from "react";
 
 const easeInOutCubic = (t) =>
   t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
@@ -59,6 +59,28 @@ export default function LogoParticleMorphCanvas({
 
   liteMode = false,
 }) {
+  const autoLiteMode = useMemo(() => {
+    if (typeof window === "undefined") return false;
+
+    const ua = window.navigator.userAgent || "";
+    const vendor = window.navigator.vendor || "";
+    const platform = window.navigator.platform || "";
+    const maxTouchPoints = window.navigator.maxTouchPoints || 0;
+
+    const isIOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (platform === "MacIntel" && maxTouchPoints > 1);
+
+    const isSafari =
+      /Safari/i.test(ua) &&
+      !/Chrome|CriOS|Edg|OPR|SamsungBrowser|Firefox|FxiOS/i.test(ua) &&
+      /Apple/i.test(vendor);
+
+    return isIOS || isSafari;
+  }, []);
+
+  const shouldLiteMode = liteMode || autoLiteMode;
+
   const canvasRef = useRef(null);
   const imgRef = useRef(null);
   const offRef = useRef(null);
@@ -109,28 +131,28 @@ export default function LogoParticleMorphCanvas({
     let fallbackTimer1 = null;
     let fallbackTimer2 = null;
 
-    const effectiveDprCap = liteMode ? Math.min(dprCap, 1.5) : dprCap;
-    const effectiveDensity = liteMode
+    const effectiveDprCap = shouldLiteMode ? Math.min(dprCap, 1.5) : dprCap;
+    const effectiveDensity = shouldLiteMode
       ? Math.max(180, Math.round(density * 0.38))
       : density;
 
-    const effectiveOverlayOversample = liteMode
+    const effectiveOverlayOversample = shouldLiteMode
       ? Math.min(overlayOversample, 2)
       : overlayOversample;
 
-    const effectiveOverlayStrength = liteMode
+    const effectiveOverlayStrength = shouldLiteMode
       ? Math.min(overlayStrength, 0.72)
       : overlayStrength;
 
-    const effectiveDriftAmp = liteMode ? driftAmp * 0.72 : driftAmp;
-    const effectiveOrbitTilt = liteMode ? orbitTilt * 0.9 : orbitTilt;
-    const effectiveOrbitWobble = liteMode ? orbitWobble * 0.65 : orbitWobble;
-    const effectiveSphereRadiusFactor = liteMode
+    const effectiveDriftAmp = shouldLiteMode ? driftAmp * 0.72 : driftAmp;
+    const effectiveOrbitTilt = shouldLiteMode ? orbitTilt * 0.9 : orbitTilt;
+    const effectiveOrbitWobble = shouldLiteMode ? orbitWobble * 0.65 : orbitWobble;
+    const effectiveSphereRadiusFactor = shouldLiteMode
       ? sphereRadiusFactor * 0.96
       : sphereRadiusFactor;
 
-    const effectiveParticleShadowBlur = liteMode ? 2 : 6;
-    const effectiveOverlayShadowBlur = liteMode ? 8 : 16;
+    const effectiveParticleShadowBlur = shouldLiteMode ? 2 : 6;
+    const effectiveOverlayShadowBlur = shouldLiteMode ? 8 : 16;
 
     const cycleSec = orbitSec + scatterSec + freeSec + gatherSec + holdSec;
 
@@ -170,7 +192,7 @@ export default function LogoParticleMorphCanvas({
       offCtx.setTransform(1, 0, 0, 1, 0, 0);
       offCtx.clearRect(0, 0, offW, offH);
       offCtx.imageSmoothingEnabled = true;
-      offCtx.imageSmoothingQuality = liteMode ? "medium" : "high";
+      offCtx.imageSmoothingQuality = shouldLiteMode ? "medium" : "high";
       offCtx.drawImage(img, 0, 0, offW, offH);
 
       return { x, y, w: drawW, h: drawH };
@@ -193,8 +215,8 @@ export default function LogoParticleMorphCanvas({
           tx: w / 2,
           ty: h / 2 + centerOffsetY,
 
-          r: liteMode ? 0.8 + Math.random() * 0.72 : 0.72 + Math.random() * 0.85,
-          a: liteMode ? 0.52 + Math.random() * 0.26 : 0.56 + Math.random() * 0.34,
+          r: shouldLiteMode ? 0.8 + Math.random() * 0.72 : 0.72 + Math.random() * 0.85,
+          a: shouldLiteMode ? 0.52 + Math.random() * 0.26 : 0.56 + Math.random() * 0.34,
 
           ph: Math.random() * Math.PI * 2,
           spd: 0.7 + Math.random() * 0.9,
@@ -227,7 +249,7 @@ export default function LogoParticleMorphCanvas({
 
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = liteMode ? "medium" : "high";
+      ctx.imageSmoothingQuality = shouldLiteMode ? "medium" : "high";
 
       stateRef.current.w = w;
       stateRef.current.h = h;
@@ -328,7 +350,7 @@ export default function LogoParticleMorphCanvas({
       let overlayAlpha = 0;
       if (overlayRect && imgRef.current) {
         if (mode === "gather") {
-          const revealStart = liteMode ? 0.8 : 0.72;
+          const revealStart = shouldLiteMode ? 0.8 : 0.72;
           const k = clamp((gatherP - revealStart) / (1 - revealStart), 0, 1);
           const eased = easeOutCubic(k);
           overlayAlpha = clamp(effectiveOverlayStrength * eased, 0, 1);
@@ -358,7 +380,7 @@ export default function LogoParticleMorphCanvas({
 
       ctx.globalCompositeOperation = "source-over";
       ctx.imageSmoothingEnabled = true;
-      ctx.imageSmoothingQuality = liteMode ? "medium" : "high";
+      ctx.imageSmoothingQuality = shouldLiteMode ? "medium" : "high";
 
       const tt = elapsedSec;
       const curOrbitSpeed =
@@ -414,7 +436,7 @@ export default function LogoParticleMorphCanvas({
 
         const rr = d.r * (0.9 + d.z * 0.28);
 
-        ctx.shadowColor = `rgba(${color},${liteMode ? "0.22" : "0.34"})`;
+        ctx.shadowColor = `rgba(${color},${shouldLiteMode ? "0.22" : "0.34"})`;
         ctx.shadowBlur = effectiveParticleShadowBlur;
         ctx.fillStyle = `rgba(${color},${clamp(alpha, 0, 1)})`;
         ctx.beginPath();
@@ -430,8 +452,8 @@ export default function LogoParticleMorphCanvas({
         ctx.save();
         ctx.globalAlpha = overlayAlpha;
         ctx.imageSmoothingEnabled = true;
-        ctx.imageSmoothingQuality = liteMode ? "medium" : "high";
-        ctx.shadowColor = `rgba(${color},${liteMode ? "0.12" : "0.20"})`;
+        ctx.imageSmoothingQuality = shouldLiteMode ? "medium" : "high";
+        ctx.shadowColor = `rgba(${color},${shouldLiteMode ? "0.12" : "0.20"})`;
         ctx.shadowBlur = effectiveOverlayShadowBlur;
         ctx.drawImage(off, x, y, ow, oh);
         ctx.shadowBlur = 0;
@@ -519,7 +541,7 @@ export default function LogoParticleMorphCanvas({
     oneShot,
     onModeChange,
     onComplete,
-    liteMode,
+    shouldLiteMode,
   ]);
 
   return (

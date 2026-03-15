@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import LogoParticleMorphCanvas from "../LogoParticleMorphCanvas";
 
 export default function IntroSection({
@@ -10,12 +10,14 @@ export default function IntroSection({
 }) {
   const main = data?.main || {};
 
-  const bgImages = Array.isArray(data?.sectionBg?.intro)
-    ? data.sectionBg.intro.filter(Boolean)
-    : [];
+  const bgImages = useMemo(() => {
+    const arr = Array.isArray(data?.sectionBg?.intro)
+      ? data.sectionBg.intro.filter(Boolean)
+      : [];
+    return arr;
+  }, [data]);
 
   const [activeIndex, setActiveIndex] = useState(0);
-  const [prevIndex, setPrevIndex] = useState(0);
 
   const [showText, setShowText] = useState(false);
   const [showBullets, setShowBullets] = useState(false);
@@ -24,18 +26,36 @@ export default function IntroSection({
   const [canvasFade, setCanvasFade] = useState(false);
   const [showBg, setShowBg] = useState(false);
 
-  const [bgCrossfade, setBgCrossfade] = useState(false);
-
   const firedRef = useRef(false);
-  const activeIndexRef = useRef(0);
-
-  const timers = useRef([]);
-  const slideIntervalRef = useRef(null);
-  const crossfadeTimerRef = useRef(null);
+  const timersRef = useRef([]);
+  const slideTimeoutRef = useRef(null);
+  const mountedRef = useRef(false);
 
   const logoSrc = "/capstone_logo_2.png";
   const logoScale = isMobile ? 1.02 : 1.12;
   const gold = "#C7A66A";
+
+  const [forceLiteMode, setForceLiteMode] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const ua = window.navigator.userAgent || "";
+    const vendor = window.navigator.vendor || "";
+    const platform = window.navigator.platform || "";
+    const maxTouchPoints = window.navigator.maxTouchPoints || 0;
+
+    const isIOS =
+      /iPad|iPhone|iPod/.test(ua) ||
+      (platform === "MacIntel" && maxTouchPoints > 1);
+
+    const isSafari =
+      /Safari/i.test(ua) &&
+      !/Chrome|CriOS|Edg|OPR|SamsungBrowser|Firefox|FxiOS/i.test(ua) &&
+      /Apple/i.test(vendor);
+
+    setForceLiteMode(isIOS || isSafari);
+  }, []);
 
   const introItems = [
     {
@@ -57,17 +77,12 @@ export default function IntroSection({
   ];
 
   const clearAllTimers = () => {
-    timers.current.forEach(clearTimeout);
-    timers.current = [];
+    timersRef.current.forEach(clearTimeout);
+    timersRef.current = [];
 
-    if (slideIntervalRef.current) {
-      clearInterval(slideIntervalRef.current);
-      slideIntervalRef.current = null;
-    }
-
-    if (crossfadeTimerRef.current) {
-      clearTimeout(crossfadeTimerRef.current);
-      crossfadeTimerRef.current = null;
+    if (slideTimeoutRef.current) {
+      clearTimeout(slideTimeoutRef.current);
+      slideTimeoutRef.current = null;
     }
   };
 
@@ -75,29 +90,59 @@ export default function IntroSection({
     if (firedRef.current) return;
     firedRef.current = true;
 
-    timers.current.push(setTimeout(() => setCanvasFade(true), 420));
-    timers.current.push(setTimeout(() => setShowBg(true), 760));
-    timers.current.push(setTimeout(() => setShowText(true), 1180));
-    timers.current.push(setTimeout(() => setShowBullets(true), 1440));
-    timers.current.push(setTimeout(() => setCanvasVisible(false), 1650));
+    timersRef.current.push(setTimeout(() => setCanvasFade(true), 380));
+    timersRef.current.push(setTimeout(() => setShowBg(true), 620));
+    timersRef.current.push(setTimeout(() => setShowText(true), 1080));
+    timersRef.current.push(setTimeout(() => setShowBullets(true), 1360));
+    timersRef.current.push(setTimeout(() => setCanvasVisible(false), 1680));
   };
 
   useEffect(() => {
-    return () => clearAllTimers();
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      clearAllTimers();
+    };
   }, []);
 
   useEffect(() => {
     if (!bgImages.length) return;
 
-    const imgs = bgImages.map((src) => {
-      const img = new Image();
-      img.decoding = "async";
-      img.src = src;
-      return img;
-    });
+    let cancelled = false;
+
+    const preload = async () => {
+      try {
+        await Promise.all(
+          bgImages.map(
+            (src) =>
+              new Promise((resolve) => {
+                const img = new Image();
+                img.decoding = "async";
+                img.loading = "eager";
+
+                img.onload = async () => {
+                  try {
+                    if (img.decode) await img.decode();
+                  } catch (_) {}
+                  resolve();
+                };
+
+                img.onerror = () => resolve();
+                img.src = src;
+              })
+          )
+        );
+      } catch (_) {
+        // ignore
+      }
+
+      if (cancelled || !mountedRef.current) return;
+    };
+
+    preload();
 
     return () => {
-      imgs.length = 0;
+      cancelled = true;
     };
   }, [bgImages]);
 
@@ -105,60 +150,33 @@ export default function IntroSection({
     const img = new Image();
     img.decoding = "async";
     img.src = logoSrc;
-  }, [logoSrc]);
+  }, []);
 
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
 
-    const SLIDE_MS = 7200;
-    const FADE_MS = 3000;
+    const SLIDE_MS = 6400;
 
-    slideIntervalRef.current = setInterval(() => {
-      const current = activeIndexRef.current;
-      const next = (current + 1) % bgImages.length;
+    const tick = () => {
+      slideTimeoutRef.current = setTimeout(() => {
+        if (!mountedRef.current) return;
 
-      setPrevIndex(current);
-      setActiveIndex(next);
+        setActiveIndex((prev) => (prev + 1) % bgImages.length);
+        tick();
+      }, SLIDE_MS);
+    };
 
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          setBgCrossfade(true);
-        });
-      });
-
-      activeIndexRef.current = next;
-
-      if (crossfadeTimerRef.current) clearTimeout(crossfadeTimerRef.current);
-      crossfadeTimerRef.current = setTimeout(() => {
-        setBgCrossfade(false);
-      }, FADE_MS);
-    }, SLIDE_MS);
+    tick();
 
     return () => {
-      if (slideIntervalRef.current) {
-        clearInterval(slideIntervalRef.current);
-        slideIntervalRef.current = null;
-      }
-      if (crossfadeTimerRef.current) {
-        clearTimeout(crossfadeTimerRef.current);
-        crossfadeTimerRef.current = null;
+      if (slideTimeoutRef.current) {
+        clearTimeout(slideTimeoutRef.current);
+        slideTimeoutRef.current = null;
       }
     };
   }, [showBg, bgImages.length]);
 
   const padTop = headerIsFixed ? headerHeight : 0;
-  const currentBg = bgImages[activeIndex] || "";
-  const previousBg = bgImages[prevIndex] || currentBg;
-
-  const currentMoveClass =
-    activeIndex % 3 === 0
-      ? "pan-a"
-      : activeIndex % 3 === 1
-      ? "pan-b"
-      : "pan-c";
-
-  const prevMoveClass =
-    prevIndex % 3 === 0 ? "pan-a" : prevIndex % 3 === 1 ? "pan-b" : "pan-c";
 
   return (
     <section
@@ -173,80 +191,83 @@ export default function IntroSection({
       }}
     >
       <style>{`
-        .introBgLayer {
+        .introBgStage {
           position: absolute;
           inset: 0;
+          z-index: 0;
+          pointer-events: none;
+          overflow: hidden;
+        }
+
+        .introBgLayer {
+          position: absolute;
+          inset: -3%;
           z-index: 0;
           pointer-events: none;
           background-position: center center;
           background-size: cover;
           background-repeat: no-repeat;
-          will-change: opacity, transform, filter;
+          will-change: opacity, transform;
           backface-visibility: hidden;
           transform: translate3d(0,0,0) scale(1.08);
-          filter: saturate(0.92) brightness(0.82);
+          opacity: 0;
+          transition:
+            opacity 2200ms ease-in-out,
+            transform 2200ms ease-out,
+            filter 2200ms ease-in-out;
+          filter: saturate(0.96) brightness(0.9);
         }
 
-        .introBgPrev {
-          opacity: ${showBg ? (bgCrossfade ? 0.94 : 0) : 0};
-          transition:
-            opacity 1850ms ease-in-out,
-            filter 1850ms ease-in-out;
-          filter: ${
-            bgCrossfade
-              ? "saturate(1.02) brightness(0.98)"
-              : "saturate(0.94) brightness(0.84)"
-          };
+        .introBgLayer.showBg {
+          opacity: 0;
         }
 
-        .introBgCurrent {
-          opacity: ${showBg ? 0.98 : 0};
-          transition:
-            opacity 1850ms ease-in-out,
-            filter 1850ms ease-in-out;
-          filter: ${
-            bgCrossfade
-              ? "saturate(0.96) brightness(0.86)"
-              : "saturate(1.08) brightness(1.04)"
-          };
+        .introBgLayer.isActive {
+          opacity: 1;
+          filter: saturate(1.04) brightness(1.02);
+        }
+
+        .introBgLayer.isInactive {
+          opacity: 0;
+          filter: saturate(0.9) brightness(0.82);
         }
 
         .introBgLayer.pan-a {
-          animation: introPanA 9200ms ease-in-out both;
+          animation: introPanA 18s ease-in-out infinite alternate;
         }
 
         .introBgLayer.pan-b {
-          animation: introPanB 9200ms ease-in-out both;
+          animation: introPanB 19s ease-in-out infinite alternate;
         }
 
         .introBgLayer.pan-c {
-          animation: introPanC 9200ms ease-in-out both;
+          animation: introPanC 20s ease-in-out infinite alternate;
         }
 
         @keyframes introPanA {
           0% {
-            transform: translate3d(-1.8%, 1.2%, 0) scale(1.08);
+            transform: translate3d(-1.6%, 1.1%, 0) scale(1.08);
           }
           100% {
-            transform: translate3d(1.8%, -1.2%, 0) scale(1.16);
+            transform: translate3d(1.6%, -1.1%, 0) scale(1.14);
           }
         }
 
         @keyframes introPanB {
           0% {
-            transform: translate3d(2.2%, 0.8%, 0) scale(1.07);
+            transform: translate3d(1.8%, 0.8%, 0) scale(1.07);
           }
           100% {
-            transform: translate3d(-1.4%, -1.6%, 0) scale(1.15);
+            transform: translate3d(-1.3%, -1.4%, 0) scale(1.13);
           }
         }
 
         @keyframes introPanC {
           0% {
-            transform: translate3d(-1.2%, -1.4%, 0) scale(1.09);
+            transform: translate3d(-1.1%, -1.3%, 0) scale(1.09);
           }
           100% {
-            transform: translate3d(1.6%, 1.1%, 0) scale(1.17);
+            transform: translate3d(1.4%, 1.0%, 0) scale(1.15);
           }
         }
 
@@ -282,8 +303,9 @@ export default function IntroSection({
           top: ${padTop}px;
           bottom: 0;
           opacity: 1;
-          transition: opacity 800ms ease;
+          transition: opacity 820ms ease;
           z-index: 2;
+          will-change: opacity;
         }
 
         .introCanvasWrap.fade {
@@ -430,28 +452,28 @@ export default function IntroSection({
 
           @keyframes introPanA {
             0% {
-              transform: translate3d(-1.2%, 1%, 0) scale(1.08);
+              transform: translate3d(-1.0%, 0.8%, 0) scale(1.08);
             }
             100% {
-              transform: translate3d(1.2%, -1%, 0) scale(1.14);
+              transform: translate3d(1.0%, -0.8%, 0) scale(1.12);
             }
           }
 
           @keyframes introPanB {
             0% {
-              transform: translate3d(1.4%, 0.6%, 0) scale(1.07);
+              transform: translate3d(1.2%, 0.6%, 0) scale(1.07);
             }
             100% {
-              transform: translate3d(-1%, -1.1%, 0) scale(1.13);
+              transform: translate3d(-0.9%, -1.0%, 0) scale(1.12);
             }
           }
 
           @keyframes introPanC {
             0% {
-              transform: translate3d(-1%, -1%, 0) scale(1.08);
+              transform: translate3d(-0.9%, -0.9%, 0) scale(1.08);
             }
             100% {
-              transform: translate3d(1.1%, 0.9%, 0) scale(1.14);
+              transform: translate3d(1.0%, 0.8%, 0) scale(1.12);
             }
           }
 
@@ -467,19 +489,39 @@ export default function IntroSection({
               );
           }
         }
+
+        @media (prefers-reduced-motion: reduce) {
+          .introBgLayer,
+          .introCanvasWrap,
+          .introTextWrap,
+          .introBulletList {
+            animation: none !important;
+            transition: none !important;
+          }
+        }
       `}</style>
 
       {bgImages.length > 0 && (
-        <>
-          <div
-            className={`introBgLayer introBgPrev ${prevMoveClass}`}
-            style={{ backgroundImage: `url(${previousBg})` }}
-          />
-          <div
-            className={`introBgLayer introBgCurrent ${currentMoveClass}`}
-            style={{ backgroundImage: `url(${currentBg})` }}
-          />
-        </>
+        <div className="introBgStage">
+          {bgImages.map((src, idx) => {
+            const panClass =
+              idx % 3 === 0 ? "pan-a" : idx % 3 === 1 ? "pan-b" : "pan-c";
+
+            const stateClass = showBg
+              ? idx === activeIndex
+                ? "isActive"
+                : "isInactive"
+              : "";
+
+            return (
+              <div
+                key={`${src}-${idx}`}
+                className={`introBgLayer showBg ${panClass} ${stateClass}`}
+                style={{ backgroundImage: `url(${src})` }}
+              />
+            );
+          })}
+        </div>
       )}
 
       <div className="introBgGradient" />
@@ -512,7 +554,6 @@ export default function IntroSection({
             orbitSpeedScatter={0.24}
             orbitTilt={0.4}
             orbitWobble={0.06}
-            liteMode={true}
           />
         </div>
       )}
@@ -523,7 +564,8 @@ export default function IntroSection({
             <h1 className="introTitle">{main.title || "MICE 산업 전문기업"}</h1>
 
             <p className="introSub">
-              {main.subtitle || "각 분야의 전문가들이 최고의 행사를 기획 및 운영합니다."}
+              {main.subtitle ||
+                "각 분야의 전문가들이 최고의 행사를 기획 및 운영합니다."}
             </p>
 
             <ul className={`introBulletList ${showBullets ? "show" : ""}`}>

@@ -209,7 +209,7 @@ export default function IntroSection({
           background-repeat: no-repeat;
           will-change: opacity, transform;
           backface-visibility: hidden;
-          transform: translate3d(0,0,0) scale(1.08);
+          transform: translate3d(0,0,0) scale(1.1);
           opacity: 0;
           transition:
             opacity 2200ms ease-in-out,
@@ -246,28 +246,28 @@ export default function IntroSection({
 
         @keyframes introPanA {
           0% {
-            transform: translate3d(-1.6%, 1.1%, 0) scale(1.08);
+            transform: translate3d(-2.1%, 1.4%, 0) scale(1.09);
           }
           100% {
-            transform: translate3d(1.6%, -1.1%, 0) scale(1.14);
+            transform: translate3d(2.1%, -1.4%, 0) scale(1.17);
           }
         }
 
         @keyframes introPanB {
           0% {
-            transform: translate3d(1.8%, 0.8%, 0) scale(1.07);
+            transform: translate3d(2.2%, 1.0%, 0) scale(1.08);
           }
           100% {
-            transform: translate3d(-1.3%, -1.4%, 0) scale(1.13);
+            transform: translate3d(-1.7%, -1.8%, 0) scale(1.16);
           }
         }
 
         @keyframes introPanC {
           0% {
-            transform: translate3d(-1.1%, -1.3%, 0) scale(1.09);
+            transform: translate3d(-1.5%, -1.7%, 0) scale(1.1);
           }
           100% {
-            transform: translate3d(1.4%, 1.0%, 0) scale(1.15);
+            transform: translate3d(1.8%, 1.3%, 0) scale(1.18);
           }
         }
 
@@ -463,28 +463,28 @@ export default function IntroSection({
 
           @keyframes introPanA {
             0% {
-              transform: translate3d(-1.0%, 0.8%, 0) scale(1.08);
+              transform: translate3d(-1.3%, 1.0%, 0) scale(1.09);
             }
             100% {
-              transform: translate3d(1.0%, -0.8%, 0) scale(1.12);
+              transform: translate3d(1.3%, -1.0%, 0) scale(1.14);
             }
           }
 
           @keyframes introPanB {
             0% {
-              transform: translate3d(1.2%, 0.6%, 0) scale(1.07);
+              transform: translate3d(1.5%, 0.8%, 0) scale(1.08);
             }
             100% {
-              transform: translate3d(-0.9%, -1.0%, 0) scale(1.12);
+              transform: translate3d(-1.1%, -1.2%, 0) scale(1.14);
             }
           }
 
           @keyframes introPanC {
             0% {
-              transform: translate3d(-0.9%, -0.9%, 0) scale(1.08);
+              transform: translate3d(-1.1%, -1.1%, 0) scale(1.09);
             }
             100% {
-              transform: translate3d(1.0%, 0.8%, 0) scale(1.12);
+              transform: translate3d(1.3%, 1.0%, 0) scale(1.14);
             }
           }
 

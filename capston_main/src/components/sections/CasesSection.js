@@ -110,7 +110,7 @@ function MobileCaseCard({ im, onOpen, styles, theme }) {
               placeItems: "center",
               color: "rgba(255,255,255,0.4)",
               fontSize: 12,
-              fontWeight: 600,
+              fontWeight: 500,
               fontFamily: titleFont,
             }}
           >
@@ -135,7 +135,7 @@ function MobileCaseCard({ im, onOpen, styles, theme }) {
             bottom: 10,
             color: "#fff",
             fontSize: 12.5,
-            fontWeight: 700,
+            fontWeight: 500,
             lineHeight: 1.35,
             letterSpacing: "-0.02em",
             wordBreak: "keep-all",
@@ -178,9 +178,9 @@ function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
         backdropFilter: "blur(6px)",
         WebkitBackdropFilter: "blur(6px)",
         display: "flex",
-        alignItems: wideMode ? "center" : "flex-end",
+        alignItems: "center",
         justifyContent: "center",
-        padding: wideMode ? 24 : 12,
+        padding: wideMode ? "20px 24px" : "12px",
         boxSizing: "border-box",
       }}
     >
@@ -189,8 +189,8 @@ function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: wideMode ? 760 : 520,
-          maxHeight: wideMode ? "min(88vh, 860px)" : "85vh",
+          maxWidth: wideMode ? 920 : 520,
+          height: wideMode ? "min(82vh, 640px)" : "min(85vh, 760px)",
           borderRadius: 22,
           overflow: "hidden",
           background:
@@ -218,7 +218,7 @@ function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
             fontSize: 22,
             lineHeight: 1,
             cursor: "pointer",
-            zIndex: 3,
+            zIndex: 4,
             display: "grid",
             placeItems: "center",
           }}
@@ -228,82 +228,98 @@ function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
 
         <div
           style={{
-            position: "relative",
-            aspectRatio: wideMode ? "1.7 / 1" : "1.3 / 1",
-            flexShrink: 0,
-            background:
-              theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-          }}
-        >
-          {im?.src ? (
-            <img
-              src={im.src}
-              alt={im?.title || ""}
-              style={{
-                position: "absolute",
-                inset: 0,
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
-            />
-          ) : (
-            <div
-              style={{
-                position: "absolute",
-                inset: 0,
-                display: "grid",
-                placeItems: "center",
-                color: "rgba(255,255,255,0.4)",
-              }}
-            >
-              PHOTO
-            </div>
-          )}
-        </div>
-
-        <div
-          style={{
-            padding: wideMode ? "22px 20px 24px" : "18px 16px 20px",
-            color: theme === "dark" ? "#fff" : "#111",
-            fontFamily: titleFont,
-            overflowY: "auto",
+            display: "grid",
+            gridTemplateRows: wideMode
+              ? "minmax(220px, 42%) minmax(0, 1fr)"
+              : "auto minmax(0, 1fr)",
+            height: "100%",
+            minHeight: 0,
           }}
         >
           <div
             style={{
-              fontSize: wideMode ? 20 : 17,
-              fontWeight: 700,
-              lineHeight: 1.35,
-              letterSpacing: "-0.02em",
-              wordBreak: "keep-all",
-              paddingRight: 44,
+              position: "relative",
+              minHeight: 0,
+              background:
+                theme === "dark"
+                  ? "rgba(255,255,255,0.03)"
+                  : "rgba(0,0,0,0.03)",
             }}
           >
-            {im?.title || im?.label || "상세보기"}
+            {im?.src ? (
+              <img
+                src={im.src}
+                alt={im?.title || ""}
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  width: "100%",
+                  height: "100%",
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "grid",
+                  placeItems: "center",
+                  color: "rgba(255,255,255,0.4)",
+                  fontFamily: titleFont,
+                  fontWeight: 500,
+                }}
+              >
+                PHOTO
+              </div>
+            )}
           </div>
 
-          {lines.length > 0 && (
+          <div
+            style={{
+              padding: wideMode ? "20px 22px 22px" : "18px 16px 20px",
+              color: theme === "dark" ? "#fff" : "#111",
+              fontFamily: titleFont,
+              overflowY: "auto",
+              minHeight: 0,
+              WebkitOverflowScrolling: "touch",
+            }}
+          >
             <div
               style={{
-                marginTop: 12,
-                display: "grid",
-                gap: 7,
-                fontSize: wideMode ? 15 : 13.5,
-                lineHeight: 1.65,
-                color:
-                  theme === "dark"
-                    ? "rgba(255,255,255,0.9)"
-                    : "rgba(17,17,17,0.82)",
+                fontSize: wideMode ? 18 : 17,
+                fontWeight: 500,
+                lineHeight: 1.38,
+                letterSpacing: "-0.02em",
                 wordBreak: "keep-all",
+                paddingRight: 44,
               }}
             >
-              {lines.map((line, idx) => (
-                <div key={idx}>{line}</div>
-              ))}
+              {im?.title || im?.label || "상세보기"}
             </div>
-          )}
+
+            {lines.length > 0 && (
+              <div
+                style={{
+                  marginTop: 12,
+                  display: "grid",
+                  gap: 7,
+                  fontSize: wideMode ? 14.5 : 13.5,
+                  lineHeight: 1.65,
+                  color:
+                    theme === "dark"
+                      ? "rgba(255,255,255,0.9)"
+                      : "rgba(17,17,17,0.82)",
+                  wordBreak: "keep-all",
+                }}
+              >
+                {lines.map((line, idx) => (
+                  <div key={idx}>{line}</div>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -344,10 +360,10 @@ export default function CasesSection({
         window.matchMedia("(hover: none), (pointer: coarse)").matches;
 
       const touchLike = isMobile || coarsePointer || width <= 1024;
-      const wideMode = width >= 768;
+      const wideMode = touchLike && width >= 768;
 
       setUseTouchLayout(touchLike);
-      setWideTouchModal(touchLike && wideMode);
+      setWideTouchModal(wideMode);
     }
 
     syncLayoutMode();
@@ -500,7 +516,7 @@ export default function CasesSection({
                         border: `1px solid ${goldBorder}`,
                         background: goldSoft,
                         color: gold,
-                        fontWeight: 700,
+                        fontWeight: 600,
                         letterSpacing: "-0.01em",
                         fontFamily: titleFont,
                         cursor: "pointer",

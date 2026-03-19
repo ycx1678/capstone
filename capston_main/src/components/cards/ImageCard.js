@@ -1,4 +1,6 @@
-import { useMemo, useState, useEffect } from "react";
+import { useMemo } from "react";
+
+const CARD_RATIO = "16 / 10";
 
 function normImage(im) {
   if (!im) return { src: "", title: "", lines: [] };
@@ -22,26 +24,10 @@ export default function ImageCard({
   placeholderBox,
 }) {
   const t = styles.themes?.[theme] ?? styles.themes.dark;
-
-  const [openMobile, setOpenMobile] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
-
   const x = useMemo(() => normImage(im), [im]);
 
   const hasImg = !!x.src;
   const lines = (x.lines || []).filter(Boolean).slice(0, 5);
-
-  // ✅ 안전한 모바일 체크
-  useEffect(() => {
-    const check = () => {
-      setIsMobile(window.innerWidth <= 768);
-    };
-
-    check();
-    window.addEventListener("resize", check);
-
-    return () => window.removeEventListener("resize", check);
-  }, []);
 
   return (
     <div
@@ -53,17 +39,24 @@ export default function ImageCard({
         background: theme === "dark" ? "rgba(255,255,255,0.03)" : t.surface,
         boxShadow: "0 18px 60px rgba(0,0,0,0.32)",
         position: "relative",
-        cursor: isMobile ? "pointer" : "default",
-      }}
-      onClick={() => {
-        if (isMobile) setOpenMobile((v) => !v);
       }}
     >
-      {/* CSS */}
       <style>{`
+        .caseMedia{
+          position: relative;
+          width: 100%;
+          aspect-ratio: ${CARD_RATIO};
+          overflow: hidden;
+          background: ${
+            theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)"
+          };
+        }
+
         .caseImg{
+          position:absolute;
+          inset:0;
           width:100%;
-          height:clamp(150px,12vw,220px);
+          height:100%;
           object-fit:cover;
           display:block;
           transform:scale(1);
@@ -78,6 +71,9 @@ export default function ImageCard({
           transform:translateY(100%);
           transition:transform .24s ease;
           will-change:transform;
+          background:rgba(0,0,0,0.78);
+          border-top:1px solid rgba(255,255,255,0.14);
+          padding:12px;
         }
 
         @media (hover:hover) and (pointer:fine){
@@ -91,94 +87,67 @@ export default function ImageCard({
         }
       `}</style>
 
-      {/* 이미지 */}
-      {hasImg ? (
-        <img className="caseImg" src={x.src} alt={x.title || ""} />
-      ) : placeholderBox ? (
-        placeholderBox("CASE")
-      ) : (
-        <div
-          style={{
-            height: "clamp(150px,12vw,220px)",
-            display: "grid",
-            placeItems: "center",
-            color:
-              theme === "dark" ? "rgba(255,255,255,0.35)" : "rgba(0,0,0,0.35)",
-          }}
-        >
-          IMAGE
-        </div>
-      )}
-
-      {/* Overlay */}
-      <div
-        className="caseOverlay"
-        style={{
-          background: "rgba(0,0,0,0.78)",
-          borderTop: "1px solid rgba(255,255,255,0.14)",
-          padding: "12px",
-          transform: isMobile
-            ? openMobile
-              ? "translateY(0)"
-              : "translateY(100%)"
-            : undefined,
-        }}
-      >
-        {/* Title */}
-        <div
-          style={{
-            fontSize: "clamp(13px,1.3vw,15px)",
-            fontWeight: 950,
-            letterSpacing: -0.3,
-            color: "rgba(255,255,255,0.95)",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {x.title || " "}
-        </div>
-
-        {/* Lines */}
-        <div
-          style={{
-            marginTop: 8,
-            display: "grid",
-            gap: 4,
-            color: "rgba(255,255,255,0.85)",
-            fontSize: 12.5,
-            lineHeight: 1.45,
-          }}
-        >
-          {lines.map((s, i) => (
-            <div
-              key={i}
-              style={{
-                whiteSpace: "nowrap",
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-              }}
-            >
-              {s}
-            </div>
-          ))}
-        </div>
-
-        {/* 모바일 안내 */}
-        {isMobile && (
+      <div className="caseMedia">
+        {hasImg ? (
+          <img className="caseImg" src={x.src} alt={x.title || ""} />
+        ) : placeholderBox ? (
+          <div style={{ width: "100%", height: "100%" }}>{placeholderBox("CASE")}</div>
+        ) : (
           <div
             style={{
-              marginTop: 10,
-              color: "rgba(255,255,255,0.65)",
-              fontSize: 12,
-              fontWeight: 800,
-              textAlign: "center",
-              userSelect: "none",
+              position: "absolute",
+              inset: 0,
+              display: "grid",
+              placeItems: "center",
+              color:
+                theme === "dark"
+                  ? "rgba(255,255,255,0.35)"
+                  : "rgba(0,0,0,0.35)",
             }}
           >
-            {openMobile ? "접기" : "터치하면 상세 보기"}
+            IMAGE
           </div>
         )}
+
+        <div className="caseOverlay">
+          <div
+            style={{
+              fontSize: "clamp(13px,1.3vw,15px)",
+              fontWeight: 800,
+              letterSpacing: "-0.02em",
+              color: "rgba(255,255,255,0.95)",
+              whiteSpace: "nowrap",
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {x.title || " "}
+          </div>
+
+          <div
+            style={{
+              marginTop: 8,
+              display: "grid",
+              gap: 4,
+              color: "rgba(255,255,255,0.85)",
+              fontSize: 12.5,
+              lineHeight: 1.45,
+            }}
+          >
+            {lines.map((s, i) => (
+              <div
+                key={i}
+                style={{
+                  whiteSpace: "nowrap",
+                  overflow: "hidden",
+                  textOverflow: "ellipsis",
+                }}
+              >
+                {s}
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

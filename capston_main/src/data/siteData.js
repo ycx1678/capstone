@@ -3,6 +3,7 @@ import defaultDataJson from "./defaultData.delivery.json";
 
 export const STORAGE_KEY = "capstone_site_data_v5";
 export const FIELDS_ROLLING_SLOTS = 22;
+export const INTRO_BG_SLOTS = 3;
 
 function createEmptyRollingPhoto() {
   return {
@@ -10,6 +11,15 @@ function createEmptyRollingPhoto() {
     label: "",
     alt: "",
   };
+}
+
+function normalizeIntroImages(list, count = INTRO_BG_SLOTS) {
+  const safeList = Array.isArray(list) ? list : [];
+
+  return Array.from({ length: count }, (_, idx) => {
+    const item = safeList[idx];
+    return typeof item === "string" ? item : "";
+  });
 }
 
 export function normalizeRollingPhotos(list, count = FIELDS_ROLLING_SLOTS) {
@@ -35,11 +45,24 @@ function normalizeFields(fields) {
   };
 }
 
+function normalizeSectionBg(sectionBg) {
+  const safeSectionBg =
+    sectionBg && typeof sectionBg === "object" ? sectionBg : {};
+
+  return {
+    ...safeSectionBg,
+    intro: normalizeIntroImages(safeSectionBg.intro),
+    fields: typeof safeSectionBg.fields === "string" ? safeSectionBg.fields : "",
+  };
+}
+
 function normalizeDataShape(data) {
   const safeData = data && typeof data === "object" ? data : {};
+
   return {
     ...safeData,
     fields: normalizeFields(safeData.fields),
+    sectionBg: normalizeSectionBg(safeData.sectionBg),
   };
 }
 

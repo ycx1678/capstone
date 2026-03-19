@@ -150,6 +150,26 @@ export default function AdminConsolePage({
     [mutate]
   );
 
+  const updateIntroImage = useCallback(
+    (index, value) => {
+      mutate((next) => {
+        if (!next.sectionBg || typeof next.sectionBg !== "object") {
+          next.sectionBg = {};
+        }
+
+        const current = Array.isArray(next.sectionBg.intro)
+          ? next.sectionBg.intro
+          : ["", "", ""];
+
+        next.sectionBg.intro = Array.from({ length: 3 }, (_, i) => {
+          const prevValue = typeof current[i] === "string" ? current[i] : "";
+          return i === index ? value : prevValue;
+        });
+      });
+    },
+    [mutate]
+  );
+
   const reset = useCallback(() => {
     if (!window.confirm("정말 초기화할까요? (모든 이미지/데이터가 삭제됩니다)"))
       return;
@@ -267,15 +287,25 @@ export default function AdminConsolePage({
     [showToast, updateByPath]
   );
 
+  const clearIntroImage = useCallback(
+    (index) => {
+      if (!window.confirm("삭제할까요?")) return;
+      updateIntroImage(index, "");
+      showToast("삭제 완료", "ok");
+    },
+    [showToast, updateIntroImage]
+  );
+
   const rollingPhotos = useMemo(() => {
-    return normalizeRollingPhotos(data?.fields?.rollingPhotos, FIELDS_ROLLING_SLOTS).map(
-      (p) => ({
-        ...p,
-        label: p?.label || "",
-        src: p?.src || "",
-        alt: p?.alt || "",
-      })
-    );
+    return normalizeRollingPhotos(
+      data?.fields?.rollingPhotos,
+      FIELDS_ROLLING_SLOTS
+    ).map((p) => ({
+      ...p,
+      label: p?.label || "",
+      src: p?.src || "",
+      alt: p?.alt || "",
+    }));
   }, [data?.fields?.rollingPhotos]);
 
   const casesBlocks = (data?.cases?.blocks || []).map((b) => ({
@@ -702,6 +732,102 @@ export default function AdminConsolePage({
 
                 {tab === "org" ? (
                   <>
+                    <AdminCard
+                      ui={ui}
+                      title="메인 배경 사진 3장"
+                      sub="IntroSection 배경에 사용되는 메인 이미지 3장을 관리합니다."
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: isMobile
+                            ? "1fr"
+                            : "repeat(3, minmax(0, 1fr))",
+                          gap: 12,
+                        }}
+                      >
+                        {[0, 1, 2].map((idx) => {
+                          const src = Array.isArray(data?.sectionBg?.intro)
+                            ? data.sectionBg.intro[idx] || ""
+                            : "";
+
+                          const path = `sectionBg.intro[${idx}]`;
+                          const bytes = src ? estimateDataUrlBytes(src) : 0;
+
+                          return (
+                            <div key={idx} style={ui.gridItem}>
+                              <div style={ui.gridHeader}>
+                                <div style={{ minWidth: 0 }}>
+                                  <div style={ui.gridTitle}>
+                                    메인 사진 #{idx + 1}
+                                  </div>
+                                  <div style={ui.monoLine}>{path}</div>
+                                  {bytes ? (
+                                    <div style={ui.sizeHint}>
+                                      Stored: {humanBytes(bytes)}
+                                    </div>
+                                  ) : null}
+                                </div>
+                              </div>
+
+                              <AdminPreview ui={ui} src={src} />
+
+                              <div style={{ marginTop: 10 }}>
+                                <div style={ui.fieldLabel}>이미지 URL</div>
+                                <input
+                                  value={src}
+                                  onChange={(e) =>
+                                    updateIntroImage(idx, e.target.value)
+                                  }
+                                  style={ui.input}
+                                  placeholder={`메인 사진 ${idx + 1} URL`}
+                                />
+                              </div>
+
+                              <div
+                                style={{
+                                  display: "flex",
+                                  gap: 10,
+                                  flexWrap: "wrap",
+                                  marginTop: 10,
+                                }}
+                              >
+                                <label
+                                  style={{
+                                    ...ui.btn,
+                                    ...ui.btnPrimary,
+                                    cursor: busy ? "not-allowed" : "pointer",
+                                  }}
+                                >
+                                  업로드
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    style={{ display: "none" }}
+                                    disabled={busy}
+                                    onChange={(e) => {
+                                      const f = e.target.files?.[0] || null;
+                                      e.target.value = "";
+                                      uploadToPath(path, f);
+                                    }}
+                                  />
+                                </label>
+
+                                <button
+                                  type="button"
+                                  style={{ ...ui.btn, ...ui.btnDanger }}
+                                  onClick={() => clearIntroImage(idx)}
+                                  disabled={busy || !src}
+                                >
+                                  삭제
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AdminCard>
+
                     <AdminCard
                       ui={ui}
                       title="헤더 메뉴 / 공통 라벨"
@@ -1325,7 +1451,9 @@ export default function AdminConsolePage({
                     <AdminCard
                       ui={ui}
                       title="사업분야 롤링 이미지"
-                      sub={`fields.rollingPhotos[0..${FIELDS_ROLLING_SLOTS - 1}] / 총 ${FIELDS_ROLLING_SLOTS}개 업로드 가능`}
+                      sub={`fields.rollingPhotos[0..${FIELDS_ROLLING_SLOTS - 1}] / 총 ${
+                        FIELDS_ROLLING_SLOTS
+                      }개 업로드 가능`}
                     >
                       <div style={ui.grid}>
                         {rollingPhotos.map((p, idx) => {

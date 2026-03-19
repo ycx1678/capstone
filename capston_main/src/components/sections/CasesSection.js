@@ -3,6 +3,7 @@ import ImageCard from "../cards/ImageCard";
 import SectionLabel from "../SectionLabel";
 
 const CASE_SLOTS = 8;
+const CASE_CARD_RATIO = "16 / 10";
 
 function normalizeImages(images) {
   return (images || []).map((x) =>
@@ -31,22 +32,25 @@ function EmptyCard({ styles, theme }) {
     <div
       className="csbEmptyCard"
       style={{
+        position: "relative",
         borderRadius: 18,
         border: `1px dashed ${t.border}`,
         background:
           theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
-        height: "clamp(140px, 12vw, 200px)",
+        aspectRatio: CASE_CARD_RATIO,
+        minHeight: 0,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         transition: "opacity 0.2s ease",
+        overflow: "hidden",
       }}
     >
       <img
         src="/capstone_logo_2.png"
         alt="capstone logo"
         style={{
-          width: "42%",
+          width: "34%",
           opacity: 0.55,
           filter: "grayscale(100%)",
           userSelect: "none",
@@ -83,7 +87,7 @@ function MobileCaseCard({ im, onOpen, styles, theme }) {
       <div
         style={{
           position: "relative",
-          aspectRatio: "1 / 1",
+          aspectRatio: CASE_CARD_RATIO,
           background:
             theme === "dark" ? "rgba(255,255,255,0.03)" : "rgba(0,0,0,0.03)",
         }}
@@ -123,7 +127,7 @@ function MobileCaseCard({ im, onOpen, styles, theme }) {
             position: "absolute",
             inset: 0,
             background:
-              "linear-gradient(180deg, rgba(0,0,0,0.06) 40%, rgba(0,0,0,0.72) 100%)",
+              "linear-gradient(180deg, rgba(0,0,0,0.04) 38%, rgba(0,0,0,0.72) 100%)",
           }}
         />
 
@@ -189,8 +193,8 @@ function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
         style={{
           position: "relative",
           width: "100%",
-          maxWidth: wideMode ? 920 : 520,
-          height: wideMode ? "min(82vh, 640px)" : "min(85vh, 760px)",
+          maxWidth: wideMode ? 980 : 560,
+          maxHeight: "90vh",
           borderRadius: 22,
           overflow: "hidden",
           background:
@@ -230,20 +234,23 @@ function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
           style={{
             display: "grid",
             gridTemplateRows: wideMode
-              ? "minmax(220px, 42%) minmax(0, 1fr)"
-              : "auto minmax(0, 1fr)",
-            height: "100%",
+              ? "minmax(260px, 52vh) minmax(0, 1fr)"
+              : "minmax(220px, 42vh) minmax(0, 1fr)",
             minHeight: 0,
           }}
         >
           <div
             style={{
               position: "relative",
-              minHeight: 0,
+              minHeight: wideMode ? 260 : 220,
               background:
                 theme === "dark"
                   ? "rgba(255,255,255,0.03)"
                   : "rgba(0,0,0,0.03)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              overflow: "hidden",
             }}
           >
             {im?.src ? (
@@ -251,11 +258,11 @@ function MobileCaseModal({ im, onClose, styles, theme, wideMode = false }) {
                 src={im.src}
                 alt={im?.title || ""}
                 style={{
-                  position: "absolute",
-                  inset: 0,
+                  maxWidth: "100%",
+                  maxHeight: "100%",
                   width: "100%",
                   height: "100%",
-                  objectFit: "cover",
+                  objectFit: "contain",
                   display: "block",
                 }}
               />
@@ -359,7 +366,8 @@ export default function CasesSection({
         typeof window.matchMedia === "function" &&
         window.matchMedia("(hover: none), (pointer: coarse)").matches;
 
-      const touchLike = isMobile || coarsePointer || width <= 1024;
+      const portraitLike = window.innerHeight > window.innerWidth;
+      const touchLike = isMobile || coarsePointer || width <= 1024 || portraitLike;
       const wideMode = touchLike && width >= 768;
 
       setUseTouchLayout(touchLike);

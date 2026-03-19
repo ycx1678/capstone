@@ -155,7 +155,7 @@ export default function IntroSection({
   useEffect(() => {
     if (!showBg || bgImages.length <= 1) return;
 
-    const SLIDE_MS = 6400;
+    const SLIDE_MS = 4600;
 
     const tick = () => {
       slideTimeoutRef.current = setTimeout(() => {
@@ -201,7 +201,7 @@ export default function IntroSection({
 
         .introBgLayer {
           position: absolute;
-          inset: -3%;
+          inset: -6%;
           z-index: 0;
           pointer-events: none;
           background-position: center center;
@@ -209,13 +209,13 @@ export default function IntroSection({
           background-repeat: no-repeat;
           will-change: opacity, transform;
           backface-visibility: hidden;
-          transform: translate3d(0,0,0) scale(1.1);
+          transform: translate3d(0, 0, 0) scale(1.14);
           opacity: 0;
           transition:
-            opacity 2200ms ease-in-out,
-            transform 2200ms ease-out,
-            filter 2200ms ease-in-out;
-          filter: saturate(0.96) brightness(0.9);
+            opacity 1500ms ease-in-out,
+            transform 1500ms ease-out,
+            filter 1500ms ease-in-out;
+          filter: saturate(0.98) brightness(0.94);
         }
 
         .introBgLayer.showBg {
@@ -224,7 +224,7 @@ export default function IntroSection({
 
         .introBgLayer.isActive {
           opacity: 1;
-          filter: saturate(1.04) brightness(1.02);
+          filter: saturate(1.08) brightness(1.04);
         }
 
         .introBgLayer.isInactive {
@@ -233,41 +233,41 @@ export default function IntroSection({
         }
 
         .introBgLayer.pan-a {
-          animation: introPanA 18s ease-in-out infinite alternate;
+          animation: introPanA 12s ease-in-out infinite alternate;
         }
 
         .introBgLayer.pan-b {
-          animation: introPanB 19s ease-in-out infinite alternate;
+          animation: introPanB 13s ease-in-out infinite alternate;
         }
 
         .introBgLayer.pan-c {
-          animation: introPanC 20s ease-in-out infinite alternate;
+          animation: introPanC 14s ease-in-out infinite alternate;
         }
 
         @keyframes introPanA {
           0% {
-            transform: translate3d(-2.1%, 1.4%, 0) scale(1.09);
+            transform: translate3d(-5.2%, 3.0%, 0) scale(1.12);
           }
           100% {
-            transform: translate3d(2.1%, -1.4%, 0) scale(1.17);
+            transform: translate3d(5.2%, -3.0%, 0) scale(1.26);
           }
         }
 
         @keyframes introPanB {
           0% {
-            transform: translate3d(2.2%, 1.0%, 0) scale(1.08);
+            transform: translate3d(4.8%, 2.4%, 0) scale(1.11);
           }
           100% {
-            transform: translate3d(-1.7%, -1.8%, 0) scale(1.16);
+            transform: translate3d(-3.8%, -3.4%, 0) scale(1.25);
           }
         }
 
         @keyframes introPanC {
           0% {
-            transform: translate3d(-1.5%, -1.7%, 0) scale(1.1);
+            transform: translate3d(-3.6%, -3.4%, 0) scale(1.13);
           }
           100% {
-            transform: translate3d(1.8%, 1.3%, 0) scale(1.18);
+            transform: translate3d(4.1%, 2.8%, 0) scale(1.27);
           }
         }
 
@@ -278,10 +278,10 @@ export default function IntroSection({
           background:
             linear-gradient(
               90deg,
-              rgba(8,10,15,0.84) 0%,
-              rgba(8,10,15,0.66) 34%,
-              rgba(8,10,15,0.34) 68%,
-              rgba(8,10,15,0.18) 100%
+              rgba(8,10,15,0.72) 0%,
+              rgba(8,10,15,0.52) 34%,
+              rgba(8,10,15,0.24) 68%,
+              rgba(8,10,15,0.10) 100%
             );
           pointer-events: none;
         }
@@ -292,8 +292,8 @@ export default function IntroSection({
           z-index: 1;
           pointer-events: none;
           background:
-            radial-gradient(900px 520px at 78% 28%, rgba(199,166,106,0.12), transparent 62%),
-            radial-gradient(760px 440px at 18% 72%, rgba(255,255,255,0.05), transparent 66%);
+            radial-gradient(900px 520px at 78% 28%, rgba(199,166,106,0.14), transparent 62%),
+            radial-gradient(760px 440px at 18% 72%, rgba(255,255,255,0.06), transparent 66%);
         }
 
         .introCanvasWrap {
@@ -463,28 +463,28 @@ export default function IntroSection({
 
           @keyframes introPanA {
             0% {
-              transform: translate3d(-1.3%, 1.0%, 0) scale(1.09);
+              transform: translate3d(-2.8%, 2.0%, 0) scale(1.10);
             }
             100% {
-              transform: translate3d(1.3%, -1.0%, 0) scale(1.14);
+              transform: translate3d(2.8%, -2.0%, 0) scale(1.20);
             }
           }
 
           @keyframes introPanB {
             0% {
-              transform: translate3d(1.5%, 0.8%, 0) scale(1.08);
+              transform: translate3d(2.8%, 1.6%, 0) scale(1.10);
             }
             100% {
-              transform: translate3d(-1.1%, -1.2%, 0) scale(1.14);
+              transform: translate3d(-2.2%, -2.2%, 0) scale(1.20);
             }
           }
 
           @keyframes introPanC {
             0% {
-              transform: translate3d(-1.1%, -1.1%, 0) scale(1.09);
+              transform: translate3d(-2.1%, -2.1%, 0) scale(1.11);
             }
             100% {
-              transform: translate3d(1.3%, 1.0%, 0) scale(1.14);
+              transform: translate3d(2.4%, 1.9%, 0) scale(1.21);
             }
           }
 
@@ -492,11 +492,11 @@ export default function IntroSection({
             background:
               linear-gradient(
                 180deg,
-                rgba(8,10,15,0.42) 0%,
-                rgba(8,10,15,0.34) 18%,
-                rgba(8,10,15,0.50) 44%,
-                rgba(8,10,15,0.72) 72%,
-                rgba(8,10,15,0.86) 100%
+                rgba(8,10,15,0.34) 0%,
+                rgba(8,10,15,0.28) 18%,
+                rgba(8,10,15,0.42) 44%,
+                rgba(8,10,15,0.66) 72%,
+                rgba(8,10,15,0.84) 100%
               );
           }
         }

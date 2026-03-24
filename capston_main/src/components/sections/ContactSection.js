@@ -14,7 +14,14 @@ export default function ContactSection({
   theme = "dark",
 }) {
   const t = styles.themes?.[theme] ?? styles.themes?.dark ?? {};
-  const c = data?.contact || {};
+  const rawContact = data?.contact || {};
+  const c = {
+    ...rawContact,
+    companyName:
+      rawContact.companyName === "주식회사 캡스톤그룹"
+        ? "CAPSTONE Group"
+        : rawContact.companyName || "CAPSTONE Group",
+  };
   const formText = data?.contactForm || {};
 
   const [form, setForm] = useState({
@@ -355,7 +362,7 @@ export default function ContactSection({
                 style={{
                   fontSize: isMobile ? "22px" : "24px",
                   fontWeight: 700,
-                  color: fg,
+                  color: gold,
                   fontFamily: displayFont,
                   letterSpacing: "-0.02em",
                   marginBottom: 14,
@@ -414,7 +421,7 @@ export default function ContactSection({
                 style={{
                   fontSize: isMobile ? "22px" : "24px",
                   fontWeight: 700,
-                  color: fg,
+                  color: gold,
                   fontFamily: displayFont,
                   letterSpacing: "-0.02em",
                   marginBottom: 18,

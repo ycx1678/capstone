@@ -365,7 +365,7 @@ export default function ContactSection({
                   marginBottom: 14,
                 }}
               >
-                {c.companyName || "주식회사 캡스톤그룹"}
+                {"CAPSTONE Group"}
               </div>
 
               <div style={{ display: "grid", gap: 0 }}>

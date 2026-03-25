@@ -207,19 +207,14 @@ export default function IntroSection({
           background-position: center center;
           background-size: cover;
           background-repeat: no-repeat;
-          will-change: opacity, transform;
+          will-change: opacity;
           backface-visibility: hidden;
           transform: translate3d(0, 0, 0) scale(1.14);
           opacity: 0;
           transition:
             opacity 1500ms ease-in-out,
-            transform 1500ms ease-out,
             filter 1500ms ease-in-out;
           filter: saturate(0.98) brightness(0.94);
-        }
-
-        .introBgLayer.showBg {
-          opacity: 0;
         }
 
         .introBgLayer.isActive {

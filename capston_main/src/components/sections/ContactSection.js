@@ -17,10 +17,7 @@ export default function ContactSection({
   const rawContact = data?.contact || {};
   const c = {
     ...rawContact,
-    companyName:
-      rawContact.companyName === "주식회사 캡스톤그룹"
-        ? "CAPSTONE Group"
-        : rawContact.companyName || "CAPSTONE Group",
+    companyName: rawContact.companyName || "주식회사 캡스톤그룹",
   };
   const formText = data?.contactForm || {};
 

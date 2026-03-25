@@ -1980,10 +1980,127 @@ export default function AdminConsolePage({
                   </>
                 ) : null}
 
+                {tab === "work" ? (
+                  <>
+                    <AdminCard
+                      ui={ui}
+                      title="주요업무 섹션 텍스트"
+                      sub="ValuesWorkSection에서 표시되는 주요 업무 제목, 부제목, 항목을 수정합니다."
+                    >
+                      <div style={{ display: "grid", gap: 14 }}>
+                        <div
+                          style={{
+                            display: "grid",
+                            gridTemplateColumns: isMobile
+                              ? "1fr"
+                              : "1fr 1fr",
+                            gap: 12,
+                          }}
+                        >
+                          <div style={{ display: "grid", gap: 6 }}>
+                            <div style={ui.fieldLabel}>섹션 제목</div>
+                            <div style={ui.monoLine}>work.title</div>
+                            <input
+                              value={data?.work?.title ?? ""}
+                              onChange={(e) =>
+                                updateByPath("work.title", e.target.value)
+                              }
+                              style={ui.input}
+                              placeholder="주요 업무"
+                            />
+                          </div>
+
+                          <div style={{ display: "grid", gap: 6 }}>
+                            <div style={ui.fieldLabel}>부제목</div>
+                            <div style={ui.monoLine}>work.subtitle</div>
+                            <input
+                              value={data?.work?.subtitle ?? ""}
+                              onChange={(e) =>
+                                updateByPath("work.subtitle", e.target.value)
+                              }
+                              style={ui.input}
+                              placeholder="안정된 행사 운영과 효율적인 업무 진행"
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </AdminCard>
+
+                    <AdminCard
+                      ui={ui}
+                      title="업무 항목 (8개)"
+                      sub="각 업무 항목의 제목과 설명을 편집합니다."
+                    >
+                      <div
+                        style={{
+                          display: "grid",
+                          gridTemplateColumns: isMobile
+                            ? "1fr"
+                            : "repeat(2, minmax(0, 1fr))",
+                          gap: 12,
+                        }}
+                      >
+                        {Array.from({ length: 8 }).map((_, idx) => {
+                          const item = data?.work?.items?.[idx] || {};
+                          return (
+                            <div key={idx} style={ui.gridItem}>
+                              <div style={ui.gridHeader}>
+                                <div style={ui.gridTitle}>
+                                  항목 #{idx + 1}
+                                </div>
+                              </div>
+
+                              <div style={{ display: "grid", gap: 6 }}>
+                                <div style={ui.fieldLabel}>제목</div>
+                                <div style={ui.monoLine}>
+                                  work.items[{idx}].t
+                                </div>
+                                <input
+                                  value={item?.t ?? ""}
+                                  onChange={(e) =>
+                                    updateByPath(
+                                      `work.items[${idx}].t`,
+                                      e.target.value
+                                    )
+                                  }
+                                  style={ui.input}
+                                  placeholder={`업무 항목 ${idx + 1} 제목`}
+                                />
+                              </div>
+
+                              <div style={{ display: "grid", gap: 6 }}>
+                                <div style={ui.fieldLabel}>설명</div>
+                                <div style={ui.monoLine}>
+                                  work.items[{idx}].d
+                                </div>
+                                <textarea
+                                  value={item?.d ?? ""}
+                                  onChange={(e) =>
+                                    updateByPath(
+                                      `work.items[${idx}].d`,
+                                      e.target.value
+                                    )
+                                  }
+                                  style={{
+                                    ...ui.input,
+                                    minHeight: 72,
+                                    resize: "vertical",
+                                  }}
+                                  placeholder={`업무 항목 ${idx + 1} 설명`}
+                                />
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </AdminCard>
+                  </>
+                ) : null}
+
                 <div style={ui.footer}>
                   <div style={ui.footerHint}>
-                    헤더 / Org / Portfolio / Cases / Contact 문구까지 어드민에서
-                    수정 가능합니다.
+                    헤더 / Org / 주요업무 / Portfolio / Cases / Contact 문구까지
+                    어드민에서 수정 가능합니다.
                   </div>
                   <button
                     type="button"

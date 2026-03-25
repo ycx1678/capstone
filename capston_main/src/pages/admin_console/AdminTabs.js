@@ -3,6 +3,7 @@ import React from "react";
 export default function AdminTabs({ ui, tab, setTab }) {
   const tabs = [
     { key: "org", label: "Org" },
+    { key: "work", label: "주요업무" },
     { key: "fields", label: "Fields" },
     { key: "cases", label: "Cases" },
   ];

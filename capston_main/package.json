@@ -14,12 +14,14 @@
   "devDependencies": {
     "@types/react": "18.3.12",
     "@types/react-dom": "18.3.1",
+    "esbuild": "^0.28.2",
     "typescript": "4.9.5"
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && node scripts/build-pages-worker.cjs",
     "test": "react-scripts test --env=jsdom",
+    "test:contact": "node --test tests/contact.test.mjs",
     "eject": "react-scripts eject"
   },
   "browserslist": [

@@ -63,20 +63,15 @@
 
     <div id="root"></div>
 
-    <form
-      name="capstone-contact"
-      method="POST"
-      data-netlify="true"
-      netlify-honeypot="bot-field"
-      hidden
-    >
-      <input type="hidden" name="form-name" value="capstone-contact" />
-      <input type="text" name="bot-field" />
-      <input type="text" name="name" />
-      <input type="text" name="org" />
-      <input type="text" name="phone" />
+    <!-- Keep the existing Netlify form registered when this repository is deployed there. -->
+    <form name="capstone-contact" method="POST" data-netlify="true" netlify-honeypot="bot-field" hidden>
+      <input name="bot-field" />
+      <input name="name" />
+      <input name="org" />
+      <input name="phone" />
       <input type="email" name="email" />
       <textarea name="inquiry"></textarea>
     </form>
+
   </body>
 </html>

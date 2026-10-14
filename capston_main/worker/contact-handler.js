@@ -1,4 +1,3 @@
-const RECIPIENT = "info@capstone-pco.com";
 const MAX_BODY_BYTES = 16384;
 const ALLOWED_ORIGINS = new Set([
   "https://www.capstone-pco.com", "https://capstone-pco.com",
@@ -37,7 +36,7 @@ async function readBody(request) {
   return JSON.parse(new TextDecoder().decode(bytes));
 }
 
-export async function handleContact(request, env, sendMail) {
+export async function handleContact(request, env, submitForm) {
   if (request.method !== "POST") {
     return new Response(null, { status: 405, headers: { Allow: "POST" } });
   }
@@ -76,38 +75,25 @@ export async function handleContact(request, env, sendMail) {
       !/^[a-zA-Z0-9-]{16,80}$/.test(input.submissionId)) {
     return json({ ok: false, error: "이름, 이메일과 문의 내용을 확인해 주세요." }, 400);
   }
-  if (!env.SMTP_USERNAME || !env.SMTP_PASSWORD) {
-    return json({ ok: false, error: DELIVERY_ERROR }, 503);
-  }
-  const text = [
-    "캡스톤 홈페이지 문의", `접수번호: ${input.submissionId}`, "",
-    `이름: ${form.name}`, `소속: ${form.org || "-"}`,
-    `연락처: ${form.phone || "-"}`, `회신 이메일: ${form.email}`, "",
-    "문의 내용:", form.inquiry,
-  ].join("\n");
   try {
-    const result = await sendMail({
-      from: RECIPIENT, to: RECIPIENT, replyTo: form.email,
-      subject: `[캡스톤 홈페이지 문의] ${form.name}`, text,
-      id: `${input.submissionId}@capstone-pco.com`,
-    });
+    const result = await submitForm({ ...form, submissionId: input.submissionId });
     if (typeof result?.id !== "string" || !result.id.trim()) {
       console.warn("Contact delivery returned no receipt");
       return json({ ok: false, error: DELIVERY_ERROR }, 502);
     }
     return json({ ok: true, id: result.id });
   } catch (error) {
-    console.warn("Contact delivery unavailable", error.stage || error.name, error.code || "");
+    console.warn("Contact delivery unavailable", error.name);
     return json({ ok: false, error: DELIVERY_ERROR }, 502);
   }
 }
 
-export function createContactWorker(sendMail) {
+export function createContactWorker(submitForm) {
   return {
     async fetch(request, env) {
       const url = new URL(request.url);
       if (url.pathname === "/api/contact") {
-        return handleContact(request, env, mail => sendMail(mail, env));
+        return handleContact(request, env, form => submitForm(form, env));
       }
       return env.ASSETS.fetch(request);
     },

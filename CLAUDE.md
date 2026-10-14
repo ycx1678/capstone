@@ -45,9 +45,9 @@ Main site sections in render order (all in `src/components/sections/`):
 6. `ContactSection` — contact form submitted to same-origin `/api/contact`; `src/lib/contact.js` checks both HTTP status and delivery reference, and failed submissions retain user input.
 
 ### Contact server
-- `worker/contact-worker.js` — Cloudflare Pages module Worker. Validates incoming inquiries and sends to the fixed company mailbox through Resend. Other paths are passed to `env.ASSETS.fetch`.
+- `worker/contact-worker.js` — Cloudflare Pages module Worker entry point. `contact-handler.js` validates incoming inquiries, and `smtp.js` sends to the fixed company mailbox through the existing Daum SMTP server using TLS. Other paths are passed to `env.ASSETS.fetch`.
 - `scripts/build-pages-worker.cjs` — packages `_worker.js` and `_routes.json` in the production build, supporting dashboard Direct Upload.
-- Runtime settings: `RESEND_API_KEY` (Secret), `CONTACT_FROM_EMAIL` (verified sender). These never belong in `REACT_APP_*` variables.
+- Runtime settings: `SMTP_USERNAME` and `SMTP_PASSWORD` (both Secret; the password must be a Daum app password). These never belong in `REACT_APP_*` variables. SMTP acceptance is required before reporting success. A stable Message-ID assists tracking but does not guarantee retry deduplication.
 - Existing apex-to-www redirect Worker and company email MX records are managed separately and are not part of the contact implementation.
 
 ### Admin Console (`src/pages/admin_console/`)
@@ -61,4 +61,4 @@ Main site sections in render order (all in `src/components/sections/`):
 - **Cloudinary**: Image CDN (env: `REACT_APP_CLOUDINARY_CLOUD_NAME`, `REACT_APP_CLOUDINARY_UPLOAD_PRESET`)
 - **Google Analytics GA4**: Tracking (ID in `public/index.html`)
 - **Cloudflare Pages**: Hosting + same-origin contact endpoint via `_worker.js`
-- **Resend**: Server-side contact email delivery; see README for configuration and release steps
+- **Daum SMTP**: Existing company mail service (`smtp.daum.net:465`, TLS); see README for configuration and release steps

@@ -1,11 +1,6 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import SectionLabel from "../SectionLabel";
-
-function encode(data) {
-  return Object.keys(data)
-    .map((key) => `${encodeURIComponent(key)}=${encodeURIComponent(data[key])}`)
-    .join("&");
-}
+import { CONTACT_ERROR, createSubmissionId, submitContact } from "../../lib/contact";
 
 export default function ContactSection({
   data,
@@ -27,7 +22,11 @@ export default function ContactSection({
     phone: "",
     email: "",
     inquiry: "",
+    website: "",
   });
+
+  const submissionId = useRef(null);
+  const sending = useRef(false);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitState, setSubmitState] = useState({
@@ -222,6 +221,7 @@ export default function ContactSection({
   const handleChange = (key) => (e) => {
     const value = e.target.value;
     setForm((prev) => ({ ...prev, [key]: value }));
+    submissionId.current = null;
     if (submitState.ok || submitState.error) {
       setSubmitState({ ok: false, error: false, message: "" });
     }
@@ -230,20 +230,15 @@ export default function ContactSection({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    if (isSubmitting) return;
+    if (sending.current) return;
 
+    sending.current = true;
     setIsSubmitting(true);
     setSubmitState({ ok: false, error: false, message: "" });
 
     try {
-      await fetch("/", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: encode({
-          "form-name": "capstone-contact",
-          ...form,
-        }),
-      });
+      if (!submissionId.current) submissionId.current = createSubmissionId();
+      await submitContact(form, submissionId.current);
 
       setSubmitState({
         ok: true,
@@ -258,15 +253,17 @@ export default function ContactSection({
         phone: "",
         email: "",
         inquiry: "",
+        website: "",
       });
+      submissionId.current = null;
     } catch (error) {
       setSubmitState({
         ok: false,
         error: true,
-        message:
-          "문의 전송 중 문제가 발생했습니다. 잠시 후 다시 시도해 주세요.",
+        message: CONTACT_ERROR,
       });
     } finally {
+      sending.current = false;
       setIsSubmitting(false);
     }
   };
@@ -430,17 +427,13 @@ export default function ContactSection({
               <form
                 name="capstone-contact"
                 method="POST"
-                data-netlify="true"
-                netlify-honeypot="bot-field"
+                action="/api/contact"
                 onSubmit={handleSubmit}
                 style={{
                   display: "grid",
                   gap: 14,
                 }}
               >
-                <input type="hidden" name="form-name" value="capstone-contact" />
-                <input type="hidden" name="bot-field" />
-
                 <div
                   style={{
                     position: "absolute",
@@ -454,7 +447,8 @@ export default function ContactSection({
                 >
                   <label>
                     Don’t fill this out if you're human:
-                    <input name="bot-field" />
+                    <input name="website" value={form.website}
+                      onChange={handleChange("website")} autoComplete="off" tabIndex={-1} />
                   </label>
                 </div>
 
@@ -472,6 +466,8 @@ export default function ContactSection({
                     <input
                       type="text"
                       name="name"
+                      maxLength={80}
+                      disabled={isSubmitting}
                       value={form.name}
                       onChange={handleChange("name")}
                       placeholder={formText?.fields?.name || "성명"}
@@ -487,6 +483,8 @@ export default function ContactSection({
                     <input
                       type="text"
                       name="org"
+                      maxLength={120}
+                      disabled={isSubmitting}
                       value={form.org}
                       onChange={handleChange("org")}
                       placeholder={formText?.fields?.org || "소속"}
@@ -509,6 +507,8 @@ export default function ContactSection({
                     <input
                       type="text"
                       name="phone"
+                      maxLength={50}
+                      disabled={isSubmitting}
                       value={form.phone}
                       onChange={handleChange("phone")}
                       placeholder={formText?.fields?.phone || "핸드폰번호"}
@@ -523,6 +523,8 @@ export default function ContactSection({
                     <input
                       type="email"
                       name="email"
+                      maxLength={254}
+                      disabled={isSubmitting}
                       value={form.email}
                       onChange={handleChange("email")}
                       placeholder={formText?.fields?.email || "이메일주소"}
@@ -538,6 +540,8 @@ export default function ContactSection({
                   </div>
                   <textarea
                     name="inquiry"
+                    maxLength={4000}
+                    disabled={isSubmitting}
                     value={form.inquiry}
                     onChange={handleChange("inquiry")}
                     placeholder={formText?.fields?.inquiry || "문의사항"}
@@ -561,7 +565,8 @@ export default function ContactSection({
                 </div>
 
                 {(submitState.ok || submitState.error) && (
-                  <div style={statusStyle}>{submitState.message}</div>
+                  <div style={statusStyle} role={submitState.error ? "alert" : "status"}
+                    aria-live="polite">{submitState.message}</div>
                 )}
               </form>
             </div>

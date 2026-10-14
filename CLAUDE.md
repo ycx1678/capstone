@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Korean MICE (Meetings, Incentives, Conferences, Exhibitions) corporate website built with React + Create React App. Content is managed via a PIN-protected admin console and stored in Supabase, with images hosted on Cloudinary. Deployed on Netlify.
+Korean MICE (Meetings, Incentives, Conferences, Exhibitions) corporate website built with React + Create React App. Content is managed via a PIN-protected admin console and stored in Supabase, with images hosted on Cloudinary. Production is a Direct Upload Cloudflare Pages project named `capstone-site` in the client's account. GitHub does not automatically update production.
 
 ## Development Commands
 
@@ -15,6 +15,7 @@ cd capston_main
 npm start          # Dev server (localhost:3000)
 npm run build      # Production build to /build
 npm test -- --env=jsdom   # Run tests with Jest
+npm run test:contact     # Contact client, state handling and server tests
 ```
 
 ## Architecture
@@ -41,7 +42,13 @@ Main site sections in render order (all in `src/components/sections/`):
 3. `ValuesWorkSection` — values and work description
 4. `FieldsSection` — portfolio with rolling photo carousel (22 slots)
 5. `CasesSection` — project cases with modal previews
-6. `ContactSection` — contact form (submitted via Netlify forms)
+6. `ContactSection` — contact form submitted to same-origin `/api/contact`; `src/lib/contact.js` checks both HTTP status and delivery reference, and failed submissions retain user input.
+
+### Contact server
+- `worker/contact-worker.js` — Cloudflare Pages module Worker. Validates incoming inquiries and sends to the fixed company mailbox through Resend. Other paths are passed to `env.ASSETS.fetch`.
+- `scripts/build-pages-worker.cjs` — packages `_worker.js` and `_routes.json` in the production build, supporting dashboard Direct Upload.
+- Runtime settings: `RESEND_API_KEY` (Secret), `CONTACT_FROM_EMAIL` (verified sender). These never belong in `REACT_APP_*` variables.
+- Existing apex-to-www redirect Worker and company email MX records are managed separately and are not part of the contact implementation.
 
 ### Admin Console (`src/pages/admin_console/`)
 - PIN-protected (`adminAuth.js`), desktop-only (`AdminMobileGate.js`)
@@ -53,4 +60,5 @@ Main site sections in render order (all in `src/components/sections/`):
 - **Supabase**: Content storage (env: `REACT_APP_SUPABASE_URL`, `REACT_APP_SUPABASE_ANON_KEY`)
 - **Cloudinary**: Image CDN (env: `REACT_APP_CLOUDINARY_CLOUD_NAME`, `REACT_APP_CLOUDINARY_UPLOAD_PRESET`)
 - **Google Analytics GA4**: Tracking (ID in `public/index.html`)
-- **Netlify**: Hosting + form handling
+- **Cloudflare Pages**: Hosting + same-origin contact endpoint via `_worker.js`
+- **Resend**: Server-side contact email delivery; see README for configuration and release steps

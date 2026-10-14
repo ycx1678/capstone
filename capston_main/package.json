@@ -18,8 +18,9 @@
   },
   "scripts": {
     "start": "react-scripts start",
-    "build": "react-scripts build",
+    "build": "react-scripts build && node scripts/build-pages-worker.cjs",
     "test": "react-scripts test --env=jsdom",
+    "test:contact": "node --test tests/contact.test.mjs",
     "eject": "react-scripts eject"
   },
   "browserslist": [
